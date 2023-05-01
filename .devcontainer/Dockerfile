@@ -38,7 +38,6 @@ RUN git config --global core.autocrlf false
 RUN git config --global pull.rebase false
 RUN git config --global core.ignoreCase false
 RUN git config --global http.sslVerify false
-RUN git config --global core.editor.nano
 
 RUN git config --global credential.helper store
 
