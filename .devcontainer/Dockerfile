@@ -4,12 +4,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ENV container docker
 ENV WORKDIR="/workspaces/video_caption"
-ENV LC_ALL="en_US.UTF-8"
-ENV  LC_CTYPE="en_US.UTF-8"
+ENV LC_ALL="C"
+ENV LC_CTYPE="C"
 
 USER root
-
-RUN dpkg-reconfigure locales
 
 RUN echo "Install dependencies..."\
     && apt-get update\
@@ -20,6 +18,7 @@ RUN echo "Install dependencies..."\
         curl\
         git-all\
         jq\
+        locales\
         htop\
         less\
         nano\
@@ -33,6 +32,8 @@ RUN echo "Install dependencies..."\
     && apt-get autoclean -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+RUN dpkg-reconfigure locales
 
 # Upgrade pip then install poetry and wheel
 RUN pip3 install --no-cache-dir --upgrade pip && pip3 install --no-cache-dir wheel poetry==1.4.0
