@@ -1,0 +1,9 @@
+[report]
+exclude_lines =
+    if __name__ == "__main__":
+    def __str__
+
+[run]
+omit =
+    */__init__.py
+    vid_cap/__main__.py

@@ -1,0 +1,62 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+default_stages: [commit, merge-commit, push]
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.2.0
+  hooks:
+    - id: trailing-whitespace
+      stages: [commit, merge-commit]
+    - id: end-of-file-fixer
+      stages: [commit, merge-commit]
+    - id: fix-encoding-pragma
+      stages: [commit, merge-commit]
+    - id: mixed-line-ending
+      stages: [commit, merge-commit]
+      args: ['--fix=lf']
+
+- repo: https://github.com/kynan/nbstripout
+  rev: 0.3.9
+  hooks:
+    - id: nbstripout
+      stages: [commit, merge-commit]
+
+- repo: https://github.com/psf/black
+  rev: 23.3.0
+  hooks:
+    - id: black-jupyter
+      stages: [commit, merge-commit]
+      args: ["-l", "100"]
+
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: 'v0.0.261'
+  hooks:
+    - id: ruff
+      stages: [commit, merge-commit]
+      args: ["--fix", "--exit-zero"]
+    - id: ruff
+      stages: [push]
+
+- repo: https://github.com/PyCQA/docformatter
+  rev: v1.5.1
+  hooks:
+    - id: docformatter
+      stages: [commit, merge-commit]
+      args: ["-r", "-i", "--wrap-summaries", "100", "--wrap-descriptions", "90"]
+
+- repo: https://github.com/PyCQA/isort
+  rev: 5.12.0
+  hooks:
+    - id: isort
+      stages: [commit, merge-commit]
+      args: ["--profile", "black", "-l", "100"]
+
+- repo: local
+  hooks:
+    - id: docs
+      name: Create documentation
+      entry: make
+      args: [docs]
+      pass_filenames: false
+      language: system
+      stages: [push]
