@@ -53,7 +53,6 @@ venv: ## Make Python virtual environment
 	$(PIP) install --no-cache-dir --upgrade pip
 	$(PIP) install --no-cache-dir wheel poetry==1.4.0
 	$(POETRY) config virtualenvs.create false
-	$(POETRY) config experimental.system-git-client true
 	$(POETRY) install --all-extras
 	pre-commit install --hook-type pre-commit --hook-type pre-push --hook-type pre-merge-commit
 
