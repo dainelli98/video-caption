@@ -43,7 +43,8 @@ RUN git config --global credential.helper store
 
 RUN poetry config virtualenvs.create false
 
-RUN poetry install --all-extras
+COPY pyproject.toml poetry.lock* .
+RUN poetry install --all-extras --no-root
 
 # Install oh-my-zsh
 RUN yes Y | sh -c "$(curl -k -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
