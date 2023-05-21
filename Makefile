@@ -50,9 +50,9 @@ help:
 	@$(PYTHON) -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 venv: ## Make Python virtual environment
-	$(PIP) install --no-cache-dir --upgrade pip
-	$(PIP) install --no-cache-dir wheel poetry==1.4.0
+	$(PIP) install --no-cache-dir --upgrade pip wheel poetry
 	$(POETRY) config virtualenvs.create false
+	$(POETRY) lock --no-update
 	$(POETRY) install --all-extras
 	pre-commit install --hook-type pre-commit --hook-type pre-push --hook-type pre-merge-commit
 
