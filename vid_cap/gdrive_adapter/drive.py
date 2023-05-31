@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Functions used to manage gdrive videos."""
 import io
 import pickle
 from pathlib import Path
@@ -14,26 +15,27 @@ from httpx import AsyncClient
 class Storage:
     """Storage class that encapsulates Google Drive API operations.
 
-    Attributes
-    ----------
-        creds_file (str): Path to the Google Drive API credentials file.
-        service (obj): Service object for the Google Drive API.
-        client (obj): AsyncClient object for asynchronous operations.
+    params:creds_file (str): Path to the Google Drive API credentials file. params:service
+    (obj): Service object for the Google Drive API. params:client (obj): AsyncClient
+    object for asynchronous operations.
     """
 
     def __init__(self, creds_file) -> None:
         """Constructs all the necessary attributes for the Storage object.
 
-        Args:
-        ----
-            creds_file (str): Path to the Google Drive API credentials file.
+        params: creds_file (str): Path to the Google Drive API credentials file.
         """
         self.creds_file = creds_file
         self.service = None
         self.client = AsyncClient()
 
     async def authenticate(self):
-        """Authenticates the client with Google Drive."""
+        """Authenticates the client with Google Drive.
+
+        Raises
+        ------
+        e: Error during authentication
+        """
         try:
             creds = None
             if Path.exists("token.pickle"):
@@ -60,10 +62,13 @@ class Storage:
     async def upload_file(self, file_name, file_path):
         """Uploads a file to Google Drive.
 
-        Args:
-        ----
-            file_name: Name of the file on Google Drive after upload.
-            file_path: Path to the local file to be uploaded.
+        params:file_name: Name of the file on Google Drive after upload.
+        params:file_path: Path to the local file to be uploaded.
+
+        Raises
+        ------
+            e: Error during file upload:
+            e: Unexpected error during file upload
         """
         try:
             media = MediaFileUpload(file_path)
@@ -79,10 +84,13 @@ class Storage:
     async def download_file(self, file_id, destination):
         """Ownloads a file from Google Drive.
 
-        Args:
-        ----
-            file_id: ID of the file on Google Drive to be downloaded.
-            destination: Local path where the downloaded file will be saved.
+        params: file_id: ID of the file on Google Drive to be downloaded.
+        params: destination: Local path where the downloaded file will be saved.
+
+        Raises
+        ------
+            e: Error during file download:
+            e: Unexpected error during file download:
         """
         try:
             file_content = await self.__download_file(file_id)
@@ -99,9 +107,11 @@ class Storage:
     async def __download_file(self, real_file_id):
         """Downloads a file from Google Drive (internal use).
 
-        Args:
-        ----
-            real_file_id: ID of the file on Google Drive to be downloaded.
+        params: real_file_id: ID of the file on Google Drive to be downloaded.
+
+        Returns
+        -------
+            _type_: bytes
         """
         try:
             file_id = real_file_id
@@ -123,9 +133,11 @@ class Storage:
     async def list_files(self, file_type):
         """Lists files on Google Drive based on the specified file type.
 
-        Args:
-        ----
-            file_type: Type of the file (e.g., 'folders', 'csv', 'mp4').
+        params: file_type: Type of the file (e.g., 'folders', 'csv', 'mp4').
+
+        Returns
+        -------
+            _type_: []
         """
         try:
             # Call the Drive v3 API
@@ -168,10 +180,12 @@ class Storage:
     async def __get_full_path(self, file_id, path=""):
         """Retrieves the full path of a file on Google Drive.
 
-        Args:
-        ----
-            file_id: ID of the file on Google Drive.
-            path: Path of the file (optional).
+        params: file_id: ID of the file on Google Drive.
+        params: path: Path of the file (optional).
+
+        Returns
+        -------
+            _type_: str
         """
         file = (
             self.service.files()
