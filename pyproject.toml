@@ -34,6 +34,7 @@ loguru = "~0.6"
 python = "~3.10"
 torch = "~2"
 transformers = {extras = ["torch"], version = ">=4.29.1"}
+google = "^3.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["jupyter"], version = ">=22.6.0"}
