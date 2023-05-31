@@ -568,7 +568,6 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 name = "cmake"
 version = "3.26.3"
 description = "CMake is an open-source, cross-platform family of tools designed to build, test and package software"
-category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -1850,7 +1849,6 @@ files = [
 name = "lit"
 version = "16.0.2"
 description = "A Software Testing Tool"
-category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -3393,7 +3391,6 @@ win32 = ["pywin32"]
 name = "setuptools"
 version = "67.8.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
-category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4203,7 +4200,6 @@ test = ["websockets"]
 name = "wheel"
 version = "0.40.0"
 description = "A built-package format for Python"
-category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
