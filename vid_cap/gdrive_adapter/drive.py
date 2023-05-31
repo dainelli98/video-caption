@@ -164,8 +164,6 @@ class Storage:
             return files
         except HttpError as error:
             print(f"An error occurred: {error}")
-        except HttpError as error:
-            print(f"An error occurred: {error}")
 
     async def __get_full_path(self, file_id, path=""):
         """Retrieves the full path of a file on Google Drive.
