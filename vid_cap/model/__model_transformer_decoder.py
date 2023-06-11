@@ -6,8 +6,18 @@ from vid_cap.model.__positional_encoding import PositionalEncoding
 
 
 class TransformerNet(nn.Module):
-    def __init__(self, num_src_vocab, num_tgt_vocab, embedding_dim, hidden_size, nheads, n_layers, max_src_len,
-                 max_tgt_len, dropout) -> None:
+    def __init__(
+        self,
+        num_src_vocab,
+        num_tgt_vocab,
+        embedding_dim,
+        hidden_size,
+        nheads,
+        n_layers,
+        max_src_len,
+        max_tgt_len,
+        dropout,
+    ) -> None:
         super().__init__()
         # embedding layer
         self.dec_embedding = nn.Embedding(len(unique_token_dictionary), embedding_dim)
