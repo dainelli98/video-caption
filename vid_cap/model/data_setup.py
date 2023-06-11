@@ -5,9 +5,7 @@ from torch.utils.data import Dataset
 
 
 class VideoCaptionDataset(Dataset):
-    def __init__(
-        self, video_embeddings_with_captions_file, transform=None, target_transform=None
-    ) -> None:
+    def __init__(self, video_embeddings_with_captions_file, transform=None, target_transform=None) -> None:
         # TODO: Load video embeddings with captions into the iterable.
         self._video_embeddings_with_captions = []
 
