@@ -1,4 +1,6 @@
 #!/bin/bash
+poetry install --all-extras
+
 mkdir ~/.zfunc
 poetry completions zsh > ~/.zfunc/_poetry
 

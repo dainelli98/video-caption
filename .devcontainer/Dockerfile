@@ -4,6 +4,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ENV container docker
 ENV WORKDIR="/workspaces/video_caption"
+ENV LC_ALL="C"
+ENV LC_CTYPE="C"
 
 USER root
 
@@ -16,6 +18,7 @@ RUN echo "Install dependencies..."\
         curl\
         git-all\
         jq\
+        locales\
         htop\
         less\
         nano\
@@ -30,6 +33,8 @@ RUN echo "Install dependencies..."\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN dpkg-reconfigure locales
+
 # Upgrade pip then install poetry and wheel
 RUN pip3 install --no-cache-dir --upgrade pip && pip3 install --no-cache-dir wheel poetry==1.4.0
 
@@ -38,13 +43,13 @@ RUN git config --global core.autocrlf false
 RUN git config --global pull.rebase false
 RUN git config --global core.ignoreCase false
 RUN git config --global http.sslVerify false
-RUN git config --global core.editor.nano
 
 RUN git config --global credential.helper store
 
 RUN poetry config virtualenvs.create false
 
-RUN poetry install --all-extras
+COPY pyproject.toml poetry.lock* .
+RUN poetry install --all-extras --no-root
 
 # Install oh-my-zsh
 RUN yes Y | sh -c "$(curl -k -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"

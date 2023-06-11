@@ -70,6 +70,7 @@ docs/source/*.md
 !docs/source/index.rst
 !docs/source/installation.rst
 !docs/source/usage.rst
+docs/.DS_Store
 
 # PyBuilder
 target/
