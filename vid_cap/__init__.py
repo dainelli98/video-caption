@@ -10,5 +10,7 @@ __version__ = metadata.version("vid_cap")
 # Base path of vid_cap module
 # (to be used when accessing non .py files in Video Caption Generator/)
 WORKDIR = Path(os.getenv("WORKDIR", Path.cwd()))
+DATA_DIR = WORKDIR / "data"
 BASEPATH = Path(__file__).parent
 ASSET_DIR = BASEPATH / "assets"
+CONFIG_DIR = WORKDIR / "config"
