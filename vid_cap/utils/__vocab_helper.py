@@ -3,9 +3,7 @@ import numpy as np
 import collections
 import csv
 
-captions_path = ".\data\Dataset\Train\captions.csv"
-
-def get_sorted_words_by_frequency(words_amount=10000):
+def get_sorted_words_by_frequency(captions_path, words_amount=10000):
     df = pd.read_csv(captions_path)
 
     token_dictionary = np.concatenate(df.iloc[:, 0].str.split().values)
@@ -24,7 +22,7 @@ def get_sorted_words_by_frequency(words_amount=10000):
 
     return truncated_words_frequencies
 
-def get_sorted_sentences_by_length():
+def get_sorted_sentences_by_length(captions_path):
     sentences_dict = {}
 
     with open(captions_path, 'r') as file:

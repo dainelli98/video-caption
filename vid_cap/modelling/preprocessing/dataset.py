@@ -15,34 +15,39 @@ class VideoFeatDataset(Dataset):
     _data: list[tuple[np.ndarray, str]]
 
     def __init__(
-        self, data_dict: dict[str, dict[str, int | np.ndarray | list[str]]], only_one: bool = False
+        self, data_dict: dict[str, dict[str, int | np.ndarray | list[str]]], captions_amount_per_video: int = 1
     ) -> None:
         """Initialize dataset with data dictionary.
 
         :param data_dict: Dictionary with data.
-        :param only_one: Whether to only use one caption per video. Defaults to ``False``.
+        :param captions_amount_per_video: Amount of captions per video, min=1, max=20. Defaults to 1.
         """
-        if only_one:
-            self_data = [(data["features"], data["captions"][0]) for data in data_dict.values()]
+        captions_amount_per_video = min(max(captions_amount_per_video, 1), 20)
 
-        else:
-            self_data = [
-                (data["features"], caption)
-                for data in data_dict.values()
-                for caption in data["captions"]
-            ]
-            random.shuffle(self_data)
+        data = [
+            (data["features"], caption)
+            for data in data_dict.values()
+            for caption in data["captions"][:captions_amount_per_video]
+        ]
+
+        # Sort the data by caption length
+        sorted_data = sorted(data, key=lambda x: len(x[1]))
+    
+        self._data = sorted_data
 
     @classmethod
-    def load(cls, file_path: Path | str, only_one: bool = False) -> Self:
+    def load(cls, file_path: Path | str, captions_amount_per_video: int = 1) -> Self:
         """Load dataset from file.
 
         :param file_path: Path to file with data.
-        :param only_one: Whether to only use one caption per video. Defaults to ``False``.
+        :param captions_amount_per_video: Amount of captions per video, min=1, max=20. Defaults to 1.
         :return: Dataset with data from file.
         """
+        captions_amount_per_video = min(max(captions_amount_per_video, 1), 20)
+
         data_dict = joblib.load(file_path)
-        return cls(data_dict, only_one)
+        
+        return cls(data_dict, captions_amount_per_video)
 
     def __getitem__(self, index: int) -> tuple[np.ndarray, str]:
         """Get item from dataset.
