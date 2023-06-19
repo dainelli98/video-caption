@@ -46,7 +46,7 @@ def gen_feat_vecs(
 
 
 def get_video_frames(filepath: Path | str, n_frames: int) -> np.ndarray:
-    container = av.open(filepath)
+    container = av.open(str(filepath.absolute()))
     indices = _sample_frame_indices(n_frames, seg_len=container.streams.video[0].frames)
     return _read_video_pyav(container, indices)
 

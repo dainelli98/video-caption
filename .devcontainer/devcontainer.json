@@ -1,30 +1,27 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.155.1/containers/python-3
 {
-	"name": "video_caption",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"context": ".."
-	},
-
-	"runArgs": ["--env-file", ".devcontainer/devcontainer.env"],
-
-	"containerUser": "root",
-
-	// Set *default* container specific settings.json values on container create.
-	"settings": {
-		"autoDocstring.docstringFormat": "sphinx",
-		"python.pythonPath": "python",
-		"python.languageServer": "Pylance",
-		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": true,
-		"python.linting.pylintPath": "/usr/local/bin/pylint",
-		"python.testing.pytestPath": "/usr/local/bin/pytest",
-		"python.testing.pytestEnabled": true,
-		"python.testing.pytestArgs": ["tests"],
-		"terminal.integrated.defaultProfile.linux": "zsh"
-	},
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sh .devcontainer/config_devcontainer.sh"
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile"
+  },
+  "containerUser": "root",
+  "name": "video_caption",
+  "postCreateCommand": "sh .devcontainer/config_devcontainer.sh",
+  "runArgs": [
+    "--env-file",
+    ".devcontainer/devcontainer.env"
+  ],
+  "settings": {
+    "autoDocstring.docstringFormat": "sphinx",
+    "python.languageServer": "Pylance",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintPath": "/usr/local/bin/pylint",
+    "python.pythonPath": "python",
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestPath": "/usr/local/bin/pytest",
+    "terminal.integrated.defaultProfile.linux": "zsh"
+  }
 }
