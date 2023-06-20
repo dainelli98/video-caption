@@ -2,17 +2,21 @@
 """Train - decoder."""
 import torch
 from loguru import logger
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
+
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 class DecoderTrainer:
-    def __init__(self, optimizer, loss_fn, training_loader, validation_loader, model) -> None:
+    def __init__(self, optimizer: torch.optim, loss_fn, training_loader: DataLoader, validation_loader: DataLoader, model) -> None:
         self.__optimizer = optimizer
         self.__loss_fn = loss_fn
         self.__training_loader = training_loader
         self.__validation_loader = validation_loader
         self.__model = model
 
-    def train(self, num_epochs, tb_writer):
+    def train(self, num_epochs: int, tb_writer: SummaryWriter):
         for epoch_index in range(num_epochs):
             logger.info("Starting epoch {}/{}", epoch_index + 1, num_epochs)
             train_loss = self.train_one_epoch(epoch_index, tb_writer)
@@ -30,7 +34,12 @@ class DecoderTrainer:
 
         for i, data in enumerate(self.__training_loader):
             # Every data instance is an input + label pair
-            inputs, labels = data
+            inputs, captions = data.to(device)
+
+            # Shuffle the data within the batch
+            perm = torch.randperm(inputs.size(0))
+            inputs = inputs[perm]
+            captions = captions[perm]
 
             # Zero your gradients for every batch!
             self.__optimizer.zero_grad()
@@ -39,7 +48,7 @@ class DecoderTrainer:
             outputs = self.__model(inputs)
 
             # Compute the loss and its gradients
-            loss = self.__loss_fn(outputs, labels)
+            loss = self.__loss_fn(outputs, captions)
             loss.backward()
 
             # Adjust learning weights
@@ -67,16 +76,22 @@ class DecoderTrainer:
         # No need to track gradients for validation, we're not optimizing.
         with torch.no_grad():
             for i, data in enumerate(self.__validation_loader):
-                inputs, labels = data
+                inputs, captions = data.to(device)
+
+                # Shuffle the data within the batch
+                perm = torch.randperm(inputs.size(0))
+                inputs = inputs[perm]
+                captions = captions[perm]
+                
                 outputs = self.__model(inputs)
 
-                loss = self.__loss_fn(outputs, labels)
+                loss = self.__loss_fn(outputs, captions)
                 running_loss += loss.item()
 
                 # Compute accuracy
                 _, predicted = torch.max(outputs, 1)
-                total_predictions += labels.size(0)
-                correct_predictions += (predicted == labels).sum().item()
+                total_predictions += captions.size(0)
+                correct_predictions += (predicted == captions).sum().item()
 
         # Switch model back to train mode
         self.__model.train()

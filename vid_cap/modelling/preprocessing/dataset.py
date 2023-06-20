@@ -16,13 +16,13 @@ class VideoFeatDataset(Dataset):
     _vocab: list[str]
 
     def __init__(
-        self, data_dict: dict[str, dict[str, int | np.ndarray | list[str]]], captions_amount_per_video: int = 1, vocab_len: int = 10000
+        self, data_dict: dict[str, dict[str, int | np.ndarray | list[str]]], captions_amount_per_video: int = 1, vocab_len: int = 1000
     ) -> None:
         """Initialize dataset with data dictionary.
 
         :param data_dict: Dictionary with data.
         :param captions_amount_per_video: Amount of captions per video, min=1, max=20. Defaults to 1.
-        :param vocab_len: Amount of words for vocabulary. Defaults to 10000.
+        :param vocab_len: Amount of words for vocabulary. Defaults to 1000.
         """
         captions_amount_per_video = min(max(captions_amount_per_video, 1), 20)
 
@@ -70,7 +70,7 @@ class VideoFeatDataset(Dataset):
 
         :param file_path: Path to file with data.
         :param captions_amount_per_video: Amount of captions per video, min=1, max=20. Defaults to 1.
-        :param vocab_len: Amount of words for vocabulary. Defaults to 10000.
+        :param vocab_len: Amount of words for vocabulary. Defaults to 1000.
         :return: Dataset with data from file.
         """
         captions_amount_per_video = min(max(captions_amount_per_video, 1), 20)
