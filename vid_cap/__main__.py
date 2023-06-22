@@ -27,13 +27,13 @@ def _main() -> None:
 
     # entry_point()
 
-    train_dataset = VideoFeatDataset.load("../data/Dataset/Train/train.pickle")
-    valid_dataset = VideoFeatDataset.load("../data/Dataset/Valid/val.pickle")# Change path
+    train_dataset = VideoFeatDataset.load("../data/Dataset/Train/train.pickle") # Change path
+    valid_dataset = VideoFeatDataset.load("C:/Users/joanh/repos/video-caption/data/Dataset/Valid/val.pickle")# Change path
     test_dataset = VideoFeatDataset.load("../data/Dataset/Train/train.pickle") # Change path
 
-    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"])
-    valid_loader = DataLoader(valid_dataset, batch_size=config["batch_size"])
-    test_loader = DataLoader(test_dataset, batch_size=config["batch_size"])
+    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
+    valid_loader = DataLoader(valid_dataset, batch_size=config["batch_size"], shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=True)
 
     my_model = TransformerNet(
         config["num_tgt_vocab"], 
@@ -45,10 +45,10 @@ def _main() -> None:
     ).to(device)
 
     optimizer = optim.Adam(my_model.parameters(), config["lr"])
-    criterion = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
     writer = SummaryWriter()
 
-    dec_trainer = DecoderTrainer(optimizer, criterion, train_loader, valid_loader, my_model)
+    dec_trainer = DecoderTrainer(optimizer, criterion, train_loader, valid_loader, my_model, train_dataset._vocab)
     dec_trainer.train(config["epochs"], writer)
 
 if __name__ == "__main__":
@@ -56,8 +56,8 @@ if __name__ == "__main__":
         "lr": 1e-3,
         "batch_size": 64,
         "epochs": 5,
-        "num_tgt_vocab": 100,
-        "embedding_dim": 1568,
+        "num_tgt_vocab": 1000,
+        "embedding_dim": 768,
         "vocab_size": 1000,
         "nheads": 8,
         "n_layers": 4,

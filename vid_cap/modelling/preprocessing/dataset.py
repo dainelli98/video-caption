@@ -13,7 +13,7 @@ class VideoFeatDataset(Dataset):
     """Dataset with video feature vectors and associated captions."""
 
     _data: list[tuple[np.ndarray, str]]
-    _vocab: list[str]
+    _vocab: dict[str, int]
 
     def __init__(
         self, data_dict: dict[str, dict[str, int | np.ndarray | list[str]]], captions_amount_per_video: int = 1, vocab_len: int = 1000
@@ -45,7 +45,7 @@ class VideoFeatDataset(Dataset):
         sorted_data = sorted(data, key=lambda x: len(x[1]))
         return sorted_data
     
-    def _build_vocab(self, vocab_len: int) -> list[str]:
+    def _build_vocab(self, vocab_len: int) -> dict[str, int]:
         """Build vocabulary from the captions in the dataset.
 
         :param vocab_len: Amount of words for vocabulary.
@@ -62,6 +62,8 @@ class VideoFeatDataset(Dataset):
         sorted_vocab.insert(0, "<pad>")
 
         truncated_sorted_vocab = sorted_vocab[:vocab_len]
+        truncated_sorted_vocab = {token: idx for idx, token in enumerate(truncated_sorted_vocab)}
+
         return truncated_sorted_vocab
 
     @classmethod

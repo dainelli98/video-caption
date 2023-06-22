@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 """Train - decoder."""
+import numpy as np
 import torch
+from torchtext.data.utils import get_tokenizer
+from torch.nn.utils.rnn import pad_sequence
 from loguru import logger
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
 class DecoderTrainer:
-    def __init__(self, optimizer: torch.optim, loss_fn, training_loader: DataLoader, validation_loader: DataLoader, model) -> None:
+    def __init__(self, optimizer: torch.optim, loss_fn, training_loader: DataLoader, validation_loader: DataLoader, model, vocab: dict[str, int]) -> None:
         self.__optimizer = optimizer
         self.__loss_fn = loss_fn
         self.__training_loader = training_loader
         self.__validation_loader = validation_loader
         self.__model = model
+        self._vocab = vocab
 
     def train(self, num_epochs: int, tb_writer: SummaryWriter):
         for epoch_index in range(num_epochs):
@@ -35,18 +37,18 @@ class DecoderTrainer:
 
         for i, data in enumerate(self.__training_loader):
             # Every data instance is an input + label pair
-            inputs, captions = data.to(device)
-
-            # Shuffle the data within the batch
-            perm = torch.randperm(inputs.size(0))
-            inputs = inputs[perm]
-            captions = captions[perm]
+            inputs, captions = data
+            captions = self.convert_captions_to_tensor(list(captions))
+            inputs = inputs.to(device)
+            captions = captions.to(device)
 
             # Zero your gradients for every batch!
             self.__optimizer.zero_grad()
 
             # Make predictions for this batch
-            outputs = self.__model(inputs)
+            outputs = self.__model(inputs, captions)
+
+            captions = torch.Tensor(np.eye(1000, dtype='uint8')[captions]) # check this function....
 
             # Compute the loss and its gradients
             loss = self.__loss_fn(outputs, captions)
@@ -77,12 +79,12 @@ class DecoderTrainer:
         # No need to track gradients for validation, we're not optimizing.
         with torch.no_grad():
             for i, data in enumerate(self.__validation_loader):
-                inputs, captions = data.to(device)
+                
+                inputs, captions = data
+                captions = self.convert_captions_to_tensor(list(captions), self._vocab)
 
-                # Shuffle the data within the batch
-                perm = torch.randperm(inputs.size(0))
-                inputs = inputs[perm]
-                captions = captions[perm]
+                inputs = inputs.to(device)
+                captions = captions.to(device)
                 
                 outputs = self.__model(inputs)
 
@@ -107,3 +109,15 @@ class DecoderTrainer:
         tb_writer.add_scalar("Accuracy/validation", accuracy, epoch_index)
 
         return avg_loss, accuracy
+
+    def convert_captions_to_tensor(self, captions):
+        # Convert tokenized captions to tensor and pad them
+        padded_captions = pad_sequence([torch.tensor(self.convert_tokens_to_ids(tokens)) for tokens in captions], batch_first=True)
+
+        return padded_captions
+
+    def convert_tokens_to_ids(self, tokens):
+        # Convert tokens to numerical IDs
+        ids = [self._vocab[token] if token in self._vocab else 1 for token in tokens]
+
+        return ids
