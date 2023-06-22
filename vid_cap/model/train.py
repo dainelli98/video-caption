@@ -3,6 +3,9 @@
 import torch
 from loguru import logger
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -14,7 +17,7 @@ class DecoderTrainer:
         self.__validation_loader = validation_loader
         self.__model = model
 
-    def train(self, num_epochs, tb_writer):
+    def train(self, num_epochs: int, tb_writer: SummaryWriter):
         for epoch_index in range(num_epochs):
             logger.info("Starting epoch {}/{}", epoch_index + 1, num_epochs)
             train_loss = self.train_one_epoch(epoch_index, tb_writer)

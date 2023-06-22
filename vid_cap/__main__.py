@@ -4,7 +4,7 @@
 # from . import __version__
 from vid_cap.model.train import DecoderTrainer
 from vid_cap.model.__model_transformer_decoder import TransformerNet
-from vid_cap.modelling.preprocessing.dataset import VideoFeatDataset
+from vid_cap.modelling.preprocessing import VideoFeatDataset 
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 
@@ -30,7 +30,7 @@ def _main() -> None:
     train_dataset = VideoFeatDataset.load("../data/Dataset/Train/train.pickle")
     valid_dataset = VideoFeatDataset.load("../data/Dataset/Valid/val.pickle")# Change path
     test_dataset = VideoFeatDataset.load("../data/Dataset/Train/train.pickle") # Change path
-    
+
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"])
     valid_loader = DataLoader(valid_dataset, batch_size=config["batch_size"])
     test_loader = DataLoader(test_dataset, batch_size=config["batch_size"])
@@ -49,7 +49,7 @@ def _main() -> None:
     writer = SummaryWriter()
 
     dec_trainer = DecoderTrainer(optimizer, criterion, train_loader, valid_loader, my_model)
-    dec_trainer.train(writer, config["epochs"])
+    dec_trainer.train(config["epochs"], writer)
 
 if __name__ == "__main__":
     config = {
