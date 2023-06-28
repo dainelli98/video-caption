@@ -1,7 +1,10 @@
-import pandas as pd
-import numpy as np
+# -*- coding: utf-8 -*-
 import collections
 import csv
+
+import numpy as np
+import pandas as pd
+
 
 def get_sorted_words_by_frequency(captions_path, words_amount=10000):
     df = pd.read_csv(captions_path)
@@ -22,10 +25,11 @@ def get_sorted_words_by_frequency(captions_path, words_amount=10000):
 
     return truncated_words_frequencies
 
+
 def get_sorted_sentences_by_length(captions_path):
     sentences_dict = {}
 
-    with open(captions_path, 'r') as file:
+    with open(captions_path) as file:
         reader = csv.reader(file)
         next(reader)  # Skip header row if present
         for row in reader:
@@ -33,6 +37,8 @@ def get_sorted_sentences_by_length(captions_path):
             video_id = row[1]  # Video ID is in the second column
             sentences_dict[video_id] = sentence
 
-    sorted_sentences_dict = {k: v for k, v in sorted(sentences_dict.items(), key=lambda x: len(x[1]), reverse=True)}
+    sorted_sentences_dict = {
+        k: v for k, v in sorted(sentences_dict.items(), key=lambda x: len(x[1]), reverse=True)
+    }
 
     return sorted_sentences_dict

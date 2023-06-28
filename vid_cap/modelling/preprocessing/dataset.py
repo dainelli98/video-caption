@@ -1,22 +1,26 @@
 # -*- coding: utf-8 -*-
 """Dataset class for loading video feature vector data."""
-import random
-from pathlib import Path
 import collections
-import joblib
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 from torch.utils.data import Dataset
-from typing_extensions import Self
 
 
 class VideoFeatDataset(Dataset):
     """Dataset with video feature vectors and associated captions."""
 
-    _data: list[tuple[np.ndarray, str]]
+    _captions: pd.DataFrame
+    _video_dir: Path
     _vocab: list[str]
 
     def __init__(
-        self, data_dict: dict[str, dict[str, int | np.ndarray | list[str]]], captions_amount_per_video: int = 1, vocab_len: int = 10000
+        self,
+        video_dir: Path | str,
+        caps_file: Path | str,
+        captions_amount_per_video: int = 1,
+        vocab_len: int = 10000,
     ) -> None:
         """Initialize dataset with data dictionary.
 
@@ -26,32 +30,23 @@ class VideoFeatDataset(Dataset):
         """
         captions_amount_per_video = min(max(captions_amount_per_video, 1), 20)
 
-        self._data = self._sort_data_by_caption_lenght(data_dict, captions_amount_per_video)
+        self._captions = pd.read_parquet(caps_file)[
+            lambda x: x["n_cap"] <= captions_amount_per_video
+        ]
+        self._video_dir = Path(video_dir)
+
+        order = self._captions["caption"].str.len().sort_values().index
+        self._captions = self._captions.reindex(order).reset_index(drop=True)
+
         self._vocab = self._build_vocab(vocab_len)
 
-    def _sort_data_by_caption_lenght(self, data_dict: dict[str, dict[str, int | np.ndarray | list[str]]], captions_amount_per_video: int) -> list[tuple[np.ndarray, str]]:
-        """Build vocabulary from the captions in the dataset.
-
-        :param data_dict: Dictionary with data.
-        :param captions_amount_per_video: Amount of captions per video.
-        :return: Truncated sorted by frecuency vocab.
-        """
-        data = [
-            (data["features"], caption)
-            for data in data_dict.values()
-            for caption in data["captions"][:captions_amount_per_video]
-        ]
-
-        sorted_data = sorted(data, key=lambda x: len(x[1]))
-        return sorted_data
-    
     def _build_vocab(self, vocab_len: int) -> list[str]:
         """Build vocabulary from the captions in the dataset.
 
         :param vocab_len: Amount of words for vocabulary.
         :return: Truncated sorted by frecuency vocab.
         """
-        captions = [caption for _, caption in self._data]
+        captions = self._captions["caption"].to_list()
         words = [word for caption in captions for word in caption.split()]
         vocab = collections.Counter(words)
         sorted_vocab = sorted(vocab, key=lambda x: vocab[x], reverse=True)
@@ -64,32 +59,18 @@ class VideoFeatDataset(Dataset):
         truncated_sorted_vocab = sorted_vocab[:vocab_len]
         return truncated_sorted_vocab
 
-    @classmethod
-    def load(cls, file_path: Path | str, captions_amount_per_video: int = 1, vocab_len: int = 1000) -> Self:
-        """Load dataset from file.
-
-        :param file_path: Path to file with data.
-        :param captions_amount_per_video: Amount of captions per video, min=1, max=20. Defaults to 1.
-        :param vocab_len: Amount of words for vocabulary. Defaults to 10000.
-        :return: Dataset with data from file.
-        """
-        captions_amount_per_video = min(max(captions_amount_per_video, 1), 20)
-
-        data_dict = joblib.load(file_path)
-        
-        return cls(data_dict, captions_amount_per_video, vocab_len)
-
     def __getitem__(self, index: int) -> tuple[np.ndarray, str]:
         """Get item from dataset.
 
         :param index: Index of item.
         :return: Feature vector and caption.
         """
-        return self._data[index]
+        caption_row = self._captions.iloc[index]
+        return np.load(self._video_dir / f"{caption_row['video']}.npy"), caption_row["caption"]
 
     def __len__(self) -> int:
         """Get length of dataset.
 
         :return: Length of dataset.
         """
-        return len(self._data)
+        return self._captions.shape[0]

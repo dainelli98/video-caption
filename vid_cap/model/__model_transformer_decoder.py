@@ -42,3 +42,4 @@ class TransformerNet(nn.Module):
         return self.log_softmax(final_out)
 
         self.decoder = nn.TransformerDecoder(dec_layer, num_layers=n_layers)
+        return None

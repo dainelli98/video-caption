@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Script to prepare dataset with VideoMAE."""
 import click
-import joblib
+import numpy as np
 import pandas as pd
 from loguru import logger
 
@@ -17,8 +17,6 @@ def main() -> None:
     for split in ("test", "val", "train"):
         logger.info(f"Preparing {split} set")
 
-        dataset = {}
-
         captions_path = DATA_DIR / split / "captions.csv"
         videos_path = DATA_DIR / split / "videos"
 
@@ -27,24 +25,35 @@ def main() -> None:
         counter = 0
         total = len(list(videos_path.iterdir()))
 
+        out_caps = []
+
+        (DATA_DIR / "output" / split / "videos").mkdir(parents=True, exist_ok=True)
+
         for video in videos_path.iterdir():
-            logger.info(f"Processing video {counter}/{total} from {split} set")
+            logger.info(f"Processing video {counter+1}/{total} from {split} set")
 
             video_path = videos_path / video
             stem = video.stem
-            vid_id = int(stem.lstrip("video"))
 
             feat_vec = pre.gen_feat_vecs(video_path, 16)[0, :, :]
 
-            dataset[vid_id] = {
-                "id": vid_id,
-                "features": feat_vec,
-                "captions": captions.loc[lambda x: x["video_id"] == stem, "caption"].to_list(),
-            }
+            np.save(DATA_DIR / "output" / split / "videos" / f"{counter}.npy", feat_vec)
+
+            vid_caps = captions.loc[lambda x: x["video_id"] == stem, "caption"].to_list()
+
+            out_caps.append(
+                pd.DataFrame(
+                    {
+                        "video": counter,
+                        "n_cap": range(1, len(vid_caps) + 1),
+                        "caption": vid_caps,
+                    }
+                )
+            )
 
             counter += 1
 
-        joblib.dump(dataset, DATA_DIR / f"{split}.pickle")
+        pd.concat(out_caps).to_parquet(DATA_DIR / "output" / split / "captions.parquet")
 
 
 if __name__ == "__main__":
