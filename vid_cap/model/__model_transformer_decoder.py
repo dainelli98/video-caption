@@ -37,6 +37,3 @@ class TransformerNet(nn.Module):
         final_out = self.dense(transformer_out)
 
         return final_out
-
-        self.decoder = nn.TransformerDecoder(dec_layer, num_layers=n_layers)
-        return None

@@ -22,13 +22,13 @@ def _main() -> None:
     """Package entry point."""
 
     train_dataset = VideoFeatDataset(
-        DATA_DIR / "train" / "videos", DATA_DIR / "train" / "captions.parquet"
+         DATA_DIR / "train" / "videos", DATA_DIR / "train" / "captions.parquet"
     )
     valid_dataset = VideoFeatDataset(
         DATA_DIR / "val" / "videos", DATA_DIR / "train" / "captions.parquet"
     )
     test_dataset = VideoFeatDataset(
-        DATA_DIR / "test" / "videos", DATA_DIR / "train" / "captions.parquet"
+         DATA_DIR / "test" / "videos", DATA_DIR / "train" / "captions.parquet"
     )
 
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     config = {
         "lr": 1e-3,
         "batch_size": 64,
-        "epochs": 5,
+        "epochs": 1,
         "num_tgt_vocab": 1000,
         "embedding_dim": 768,
         "vocab_size": 1000,
