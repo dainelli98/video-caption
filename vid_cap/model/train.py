@@ -38,20 +38,22 @@ class DecoderTrainer:
         for i, data in enumerate(self.__training_loader):
             # Every data instance is an input + label pair
             inputs, captions = data
-            captions = self.convert_captions_to_tensor(list(captions))
+            print(inputs.shape)
+            captions_str, captions_end = self.convert_captions_to_tensor(list(captions))
             inputs = inputs.to(device)
-            captions = captions.to(device)
+            captions_str = captions_str.to(device)
+            captions_end = captions_end.to(device)
 
             # Zero your gradients for every batch!
             self.__optimizer.zero_grad()
 
             # Make predictions for this batch
-            outputs = self.__model(inputs, captions)
+            outputs = self.__model(inputs, captions_str)
 
-            captions = torch.Tensor(np.eye(1000, dtype='uint8')[captions]) # check this function....
+            captions_end = torch.Tensor(np.eye(1000, dtype='uint8')[captions_end]) # check this function....
 
             # Compute the loss and its gradients
-            loss = self.__loss_fn(outputs, captions)
+            loss = self.__loss_fn(outputs, captions_end)
             loss.backward()
 
             # Adjust learning weights
@@ -112,12 +114,15 @@ class DecoderTrainer:
 
     def convert_captions_to_tensor(self, captions):
         # Convert tokenized captions to tensor and pad them
-        padded_captions = pad_sequence([torch.tensor(self.convert_tokens_to_ids(tokens)) for tokens in captions], batch_first=True)
+        padded_captions_str = pad_sequence([torch.tensor(self.convert_tokens_to_ids('<sos> ' + tokens)) for tokens in captions], batch_first=True)
+        padded_captions_end = pad_sequence([torch.tensor(self.convert_tokens_to_ids(tokens + ' <eos>')) for tokens in captions], batch_first=True)
 
-        return padded_captions
+        print(padded_captions_str[0])
+        print(padded_captions_end[0])
+        return padded_captions_str, padded_captions_end
 
     def convert_tokens_to_ids(self, tokens):
         # Convert tokens to numerical IDs
-        ids = [self._vocab[token] if token in self._vocab else 1 for token in tokens]
+        ids = [self._vocab.get(token, 1) for token in tokens.split()]
 
         return ids
