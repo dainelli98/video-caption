@@ -14,7 +14,7 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from httpx import AsyncClient
 
 
-class FileTypeEnum(Enum):
+class GFileType(Enum):
     """Enum class for file types."""
 
     FOLDER = "application/vnd.google-apps.folder"
@@ -135,11 +135,11 @@ class Storage:
 
         return file.getvalue()
 
-    async def list_files(self, file_type: FileTypeEnum) -> list:
+    async def list_files(self, file_type: GFileType) -> list:
         """List all files on Google Drive.
 
         :param file_type: Type of files to be listed.
-        :type file_type: FileTypeEnum
+        :type file_type: GFileType
         :return: List of files.
         :rtype: list
         """
