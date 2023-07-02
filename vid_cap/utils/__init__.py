@@ -2,4 +2,4 @@
 """Utils package."""
 from ._utils import accuracy
 
-__all__ = ["accuracy"]
+__all__: list[str] = ["accuracy"]

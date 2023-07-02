@@ -2,4 +2,4 @@
 """Google adapter functions."""
 from .drive import FileTypeEnum, Storage
 
-__all__ = ["Storage", "FileTypeEnum"]
+__all__: list[str] = ["Storage", "FileTypeEnum"]
