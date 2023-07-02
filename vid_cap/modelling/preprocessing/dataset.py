@@ -25,7 +25,8 @@ class VideoFeatDataset(Dataset):
         """Initialize dataset with data dictionary.
 
         :param data_dict: Dictionary with data.
-        :param captions_amount_per_video: Amount of captions per video, min=1, max=20. Defaults to 1.
+        :param captions_amount_per_video: Amount of captions per video, min=1, max=20.
+            Defaults to 1.
         :param vocab_len: Amount of words for vocabulary. Defaults to 1000.
         """
         captions_amount_per_video = min(max(captions_amount_per_video, 1), 20)
