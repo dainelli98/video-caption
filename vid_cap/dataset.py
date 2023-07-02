@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import torch
 from torch.utils.data import Dataset
 
 
@@ -86,7 +87,10 @@ class VideoFeatDataset(Dataset):
         :return: Feature vector and caption.
         """
         caption_row = self._captions.iloc[index]
-        return np.load(self._video_dir / f"{caption_row['video']}.npy"), caption_row["caption"]
+        return (
+            torch.tensor(np.load(self._video_dir / f"{caption_row['video']}.npy")),
+            caption_row["caption"],
+        )
 
     def __len__(self) -> int:
         """Get length of dataset.
