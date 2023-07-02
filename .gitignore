@@ -127,3 +127,5 @@ data/*
 
 # Temp folder for testing
 .tmp
+
+runs/*
