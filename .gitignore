@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+runs/
 env/
 build/
 develop-eggs/
@@ -126,3 +127,5 @@ data/*
 
 # Temp folder for testing
 .tmp
+
+runs/*

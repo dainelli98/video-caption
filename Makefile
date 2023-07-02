@@ -50,7 +50,7 @@ help:
 	@$(PYTHON) -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 venv: ## Make Python virtual environment
-	$(PIP) install --no-cache-dir --upgrade pip wheel poetry
+	$(PIP) install --no-cache-dir --upgrade pip wheel poetry==1.5.0
 	$(POETRY) config virtualenvs.create false
 	$(POETRY) lock --no-update
 	$(POETRY) install --all-extras
@@ -150,5 +150,4 @@ pre-commit: ## Run pre-commit without attempting a commit
 format: ## Apply formatters
 	black -l 100 .
 	ruff -s --fix --exit-zero .
-	isort --profile black -l 100 .
 	docformatter -r -i --wrap-summaries 100 --wrap-descriptions 90 .

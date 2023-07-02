@@ -25,8 +25,9 @@ class VideoFeatDataset(Dataset):
         """Initialize dataset with data dictionary.
 
         :param data_dict: Dictionary with data.
-        :param captions_amount_per_video: Amount of captions per video, min=1, max=20. Defaults to 1.
-        :param vocab_len: Amount of words for vocabulary. Defaults to 10000.
+        :param captions_amount_per_video: Amount of captions per video, min=1, max=20.
+            Defaults to 1.
+        :param vocab_len: Amount of words for vocabulary. Defaults to 1000.
         """
         captions_amount_per_video = min(max(captions_amount_per_video, 1), 20)
 
@@ -40,7 +41,7 @@ class VideoFeatDataset(Dataset):
 
         self._vocab = self._build_vocab(vocab_len)
 
-    def _build_vocab(self, vocab_len: int) -> list[str]:
+    def _build_vocab(self, vocab_len: int) -> dict[str, int]:
         """Build vocabulary from the captions in the dataset.
 
         :param vocab_len: Amount of words for vocabulary.
@@ -57,7 +58,7 @@ class VideoFeatDataset(Dataset):
         sorted_vocab.insert(0, "<pad>")
 
         truncated_sorted_vocab = sorted_vocab[:vocab_len]
-        return truncated_sorted_vocab
+        return {token: idx for idx, token in enumerate(truncated_sorted_vocab)}
 
     def __getitem__(self, index: int) -> tuple[np.ndarray, str]:
         """Get item from dataset.
