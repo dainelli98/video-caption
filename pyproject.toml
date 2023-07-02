@@ -71,7 +71,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-vid_cap = "vid_cap.__main__:_main"
+vid-cap = "vid_cap.__main__:_main"
 
 [tool.ruff]
 line-length = 100
