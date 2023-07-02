@@ -14,8 +14,6 @@
     "autoDocstring.docstringFormat": "sphinx",
     "python.languageServer": "Pylance",
     "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.linting.pylintPath": "/usr/local/bin/pylint",
     "python.pythonPath": "python",
     "python.testing.pytestArgs": [
       "tests"
