@@ -49,13 +49,6 @@ repos:
       stages: [commit, merge-commit]
       args: ["-r", "-i", "--wrap-summaries", "100", "--wrap-descriptions", "90"]
 
-- repo: https://github.com/PyCQA/isort
-  rev: 5.12.0
-  hooks:
-    - id: isort
-      stages: [commit, merge-commit]
-      args: ["--profile", "black", "-l", "100"]
-
 - repo: local
   hooks:
     - id: docs

@@ -22,13 +22,13 @@ def _main() -> None:
     """Package entry point."""
 
     train_dataset = VideoFeatDataset(
-         DATA_DIR / "train" / "videos", DATA_DIR / "train" / "captions.parquet"
+        DATA_DIR / "train" / "videos", DATA_DIR / "train" / "captions.parquet"
     )
     valid_dataset = VideoFeatDataset(
         DATA_DIR / "val" / "videos", DATA_DIR / "train" / "captions.parquet"
     )
     test_dataset = VideoFeatDataset(
-         DATA_DIR / "test" / "videos", DATA_DIR / "train" / "captions.parquet"
+        DATA_DIR / "test" / "videos", DATA_DIR / "train" / "captions.parquet"
     )
 
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)

@@ -34,6 +34,4 @@ class TransformerNet(nn.Module):
         tgt = self.dec_pe(tgt)
         src = self.dec_pe(src)
         transformer_out = self.decoder(tgt, src)
-        final_out = self.dense(transformer_out)
-
-        return final_out
+        return self.dense(transformer_out)

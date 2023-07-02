@@ -57,9 +57,7 @@ class VideoFeatDataset(Dataset):
         sorted_vocab.insert(0, "<pad>")
 
         truncated_sorted_vocab = sorted_vocab[:vocab_len]
-        truncated_sorted_vocab = {token: idx for idx, token in enumerate(truncated_sorted_vocab)}
-
-        return truncated_sorted_vocab
+        return {token: idx for idx, token in enumerate(truncated_sorted_vocab)}
 
     def __getitem__(self, index: int) -> tuple[np.ndarray, str]:
         """Get item from dataset.

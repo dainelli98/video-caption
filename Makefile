@@ -150,5 +150,4 @@ pre-commit: ## Run pre-commit without attempting a commit
 format: ## Apply formatters
 	black -l 100 .
 	ruff -s --fix --exit-zero .
-	isort --profile black -l 100 .
 	docformatter -r -i --wrap-summaries 100 --wrap-descriptions 90 .
