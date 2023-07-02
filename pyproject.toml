@@ -45,10 +45,10 @@ tensorboard = "^2.13.0"
 torchtext = "^0.15.2"
 
 [tool.poetry.group.dev.dependencies]
-black = {extras = ["jupyter"], version = ">=22.6.0"}
+black = {extras = ["jupyter"], version = "23.3.0"}
 coverage = ">=6.4.3"
 cruft = "^2.12.0"
-docformatter = ">=1.4, < 1.6"
+docformatter = "1.7.3"
 GitPython = ">=3.1.27"
 jupyterlab = ">=3.2.5"
 jupytext = ">=1.13.7"
@@ -59,7 +59,7 @@ pytest = ">=7.2.0"
 pytest-runner = ">=6.0.0"
 pytest-xdist = ">=3.1.0"
 python-dotenv = ">=0.20.0"
-ruff = ">=0.0.243"
+ruff = "0.0.275"
 
 [tool.poetry.group.docs.dependencies]
 furo = ">=2022.12.7"

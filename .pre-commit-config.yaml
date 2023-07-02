@@ -3,7 +3,7 @@
 default_stages: [commit, merge-commit, push]
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.2.0
+  rev: v4.4.0
   hooks:
     - id: trailing-whitespace
       stages: [commit, merge-commit]
@@ -21,10 +21,17 @@ repos:
       args: ['--autofix']
 
 - repo: https://github.com/kynan/nbstripout
-  rev: 0.3.9
+  rev: 0.6.1
   hooks:
     - id: nbstripout
       stages: [commit, merge-commit]
+
+- repo: https://github.com/python-poetry/poetry
+  rev: 1.5.0
+  hooks:
+    - id: poetry-lock
+      stages: [commit, merge-commit]
+      args: ['--no-update']
 
 - repo: https://github.com/psf/black
   rev: 23.3.0
@@ -34,7 +41,7 @@ repos:
       args: ["-l", "100"]
 
 - repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: 'v0.0.261'
+  rev: 'v0.0.275'
   hooks:
     - id: ruff
       stages: [commit, merge-commit]
@@ -43,7 +50,7 @@ repos:
       stages: [push]
 
 - repo: https://github.com/PyCQA/docformatter
-  rev: v1.5.1
+  rev: v1.7.3
   hooks:
     - id: docformatter
       stages: [commit, merge-commit]

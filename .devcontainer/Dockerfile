@@ -35,8 +35,7 @@ RUN echo "Install dependencies..."\
 
 RUN dpkg-reconfigure locales
 
-# Upgrade pip then install poetry and wheel
-RUN pip3 install --no-cache-dir --upgrade pip && pip3 install --no-cache-dir wheel poetry==1.4.0
+RUN pip3 install --no-cache-dir --upgrade pip && pip3 install --no-cache-dir wheel poetry==1.5.0
 
 RUN git config --global --add safe.directory "$WORKDIR"
 RUN git config --global core.autocrlf false
@@ -48,8 +47,7 @@ RUN git config --global credential.helper store
 
 RUN poetry config virtualenvs.create false
 
-COPY pyproject.toml poetry.lock* .
+COPY pyproject.toml poetry.lock* ./
 RUN poetry install --all-extras --no-root
 
-# Install oh-my-zsh
 RUN yes Y | sh -c "$(curl -k -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
