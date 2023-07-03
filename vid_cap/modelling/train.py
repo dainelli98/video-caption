@@ -143,12 +143,16 @@ def _validate_one_epoch(
 
             outputs = model(inputs, captions_str)
 
-            loss = loss_fn(outputs, captions)
+            captions_end = (
+                torch.nn.functional.one_hot(captions_end, num_classes=1000).float().to(device)
+            )
+
+            loss = loss_fn(outputs, captions_end)
             running_loss += loss.item()
 
             # Compute accuracy
             _, predicted = torch.max(outputs, 1)
-            total_predictions += captions.size(0)
+            total_predictions += len(captions)
             correct_predictions += (predicted == captions).sum().item()
 
     model.train()
