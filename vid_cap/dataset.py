@@ -39,7 +39,10 @@ class VideoFeatDataset(Dataset):
         self._captions = self._captions.reindex(order).reset_index(drop=True)
 
         if vocab_len is not None:
-            self._build_vocab(vocab_len)
+            self.build_vocab(vocab_len)
+
+        else:
+            self._vocab = None
 
     @property
     def vocab(self) -> dict[str, int]:
@@ -52,7 +55,8 @@ class VideoFeatDataset(Dataset):
 
         return self._vocab
 
-    def get_vocab_len(self) -> int:
+    @property
+    def vocab_len(self) -> int:
         """Get vocabulary length.
 
         :return: Vocabulary length.

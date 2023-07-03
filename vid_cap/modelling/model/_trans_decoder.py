@@ -31,7 +31,7 @@ class TransformerNet(nn.Module):
         self.decoder = nn.TransformerDecoder(dec_layer, num_layers=n_layers)
 
         # final dense layer
-        self.dense = nn.Linear(embedding_dim, max_seq_len)
+        self.dense = nn.Linear(embedding_dim, vocab_size)
 
     def forward(self, src: torch.Tensor, tgt: torch.Tensor) -> torch.Tensor:
         tgt = self.dec_embedding(tgt)

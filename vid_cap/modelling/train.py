@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Train - decoder."""
 import torch
+import tqdm
 from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
@@ -8,9 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from .model import TransformerNet
 
-_LOSS_FN = torch.nn.modules.loss._Loss  # ruff: noqa: SLF001
-
-_DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+_LOSS_FN = torch.nn.modules.loss._Loss  # noqa: SLF001
 
 
 def train(
@@ -21,17 +20,33 @@ def train(
     optimizer: torch.optim.Optimizer,
     loss_fn: _LOSS_FN,
     num_epochs: int,
+    device: torch.device,
     tb_writer: SummaryWriter | None = None,
 ) -> TransformerNet:
+    """Train model.
+
+    :param model: Model to train.
+    :param train_loader: Training data loader.
+    :param valid_loader: Validation data loader.
+    :param vocab: Vocabulary.
+    :param optimizer: Optimizer.
+    :param loss_fn: Loss function.
+    :param num_epochs: Number of epochs.
+    :param device: Device to use.
+    :param tb_writer: Tensorboard writer.
+    :return: Trained model.
+    """
     model.train()
 
     for epoch in range(num_epochs):
         logger.info("Starting epoch {}/{}", epoch + 1, num_epochs)
         train_loss = _train_one_epoch(
-            model, train_loader, vocab, optimizer, loss_fn, epoch, tb_writer
+            model, train_loader, vocab, optimizer, loss_fn, epoch, device, tb_writer
         )
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
-        val_loss, _ = _validate_one_epoch(model, valid_loader, vocab, loss_fn, epoch, tb_writer)
+        val_loss, _ = _validate_one_epoch(
+            model, valid_loader, vocab, loss_fn, epoch, device, tb_writer
+        )
         logger.info("End of epoch {}/{}. Validation loss: {}", epoch + 1, num_epochs, val_loss)
 
     return model
@@ -44,22 +59,37 @@ def _train_one_epoch(
     optimizer: torch.optim.Optimizer,
     loss_fn: _LOSS_FN,
     epoch: int,
+    device: torch.device,
     tb_writer: SummaryWriter | None,
 ) -> float:
+    """Train one epoch.
+
+    :param model: Model to train.
+    :param training_loader: Training data loader.
+    :param vocab: Vocabulary.
+    :param optimizer: Optimizer.
+    :param loss_fn: Loss function.
+    :param epoch: Epoch number.
+    :param device: Device to use.
+    :param tb_writer: Tensorboard writer. Defaults to ``None``.
+    :return: Loss.
+    """
     running_loss = 0.0
 
-    for data in training_loader:
+    for data in tqdm.tqdm(training_loader, f"Train epoch {epoch + 1}"):
         inputs, captions = data
         captions_str, captions_end = _convert_captions_to_tensor(list(captions), vocab)
-        inputs = inputs.to(_DEVICE)
-        captions_str = captions_str.to(_DEVICE)
-        captions_end = captions_end.to(_DEVICE)
+        inputs = inputs.to(device)
+        captions_str = captions_str.to(device)
+        captions_end = captions_end.to(device)
 
         optimizer.zero_grad()
 
         outputs = model(inputs, captions_str)
 
-        captions_end = torch.nn.functional.one_hot(captions_end, num_classes=1000).to(_DEVICE)
+        captions_end = (
+            torch.nn.functional.one_hot(captions_end, num_classes=1000).float().to(device)
+        )
 
         loss = loss_fn(outputs, captions_end)
         loss.backward()
@@ -82,8 +112,20 @@ def _validate_one_epoch(
     vocab: dict[str, int],
     loss_fn: _LOSS_FN,
     epoch: int,
+    device: torch.device,
     tb_writer: SummaryWriter | None,
 ) -> tuple[float, float]:
+    """Validate one epoch.
+
+    :param model: Model to validate.
+    :param val_loader: Validation data loader.
+    :param vocab: Vocabulary.
+    :param loss_fn: Loss function.
+    :param epoch: Epoch number.
+    :param device: Device to use.
+    :param tb_writer: Tensorboard writer. Defaults to ``None``.
+    :return: Validation loss and accuracy.
+    """
     model.eval()
 
     running_loss = 0.0
@@ -91,13 +133,13 @@ def _validate_one_epoch(
     total_predictions = 0
 
     with torch.no_grad():
-        for data in val_loader:
+        for data in tqdm.tqdm(val_loader, f"Validation epoch {epoch + 1}"):
             inputs, captions = data
             captions_str, captions_end = _convert_captions_to_tensor(list(captions), vocab)
 
-            inputs = inputs.to(_DEVICE)
-            captions_str = captions_str.to(_DEVICE)
-            captions_end = captions_end.to(_DEVICE)
+            inputs = inputs.to(device)
+            captions_str = captions_str.to(device)
+            captions_end = captions_end.to(device)
 
             outputs = model(inputs, captions_str)
 
