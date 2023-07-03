@@ -59,7 +59,7 @@ def main(
         data_dir / "train" / "videos", data_dir / "train" / "captions.parquet", vocab_len=vocab_len
     )
     valid_dataset = VideoFeatDataset(
-        data_dir / "val" / "videos", data_dir / "train" / "captions.parquet"
+        data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", vocab_len=vocab_len
     )
 
     train_loader = DataLoader(train_dataset, batch_size, shuffle)

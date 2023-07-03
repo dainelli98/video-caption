@@ -36,7 +36,6 @@ def train(
     :param tb_writer: Tensorboard writer.
     :return: Trained model.
     """
-    model.train()
 
     for epoch in range(num_epochs):
         logger.info("Starting epoch {}/{}", epoch + 1, num_epochs)
@@ -74,6 +73,7 @@ def _train_one_epoch(
     :param tb_writer: Tensorboard writer. Defaults to ``None``.
     :return: Loss.
     """
+    model.train()
     running_loss = 0.0
 
     for data in tqdm.tqdm(training_loader, f"Train epoch {epoch + 1}"):
@@ -143,19 +143,19 @@ def _validate_one_epoch(
 
             outputs = model(inputs, captions_str)
 
-            captions_end = (
+            captions_end_one_hot = (
                 torch.nn.functional.one_hot(captions_end, num_classes=1000).float().to(device)
             )
 
-            loss = loss_fn(outputs, captions_end)
+            loss = loss_fn(outputs, captions_end_one_hot)
             running_loss += loss.item()
 
             # Compute accuracy
             _, predicted = torch.max(outputs, 1)
-            total_predictions += len(captions)
-            correct_predictions += (predicted == captions).sum().item()
-
-    model.train()
+            total_predictions += len(captions_end)
+            captions_length = captions_end.size(1)
+            predicted_truncated = predicted[:, :captions_length]
+            correct_predictions += torch.sum(predicted_truncated == captions_end).item()
 
     avg_loss = running_loss / len(val_loader)
     accuracy = correct_predictions / total_predictions
@@ -174,7 +174,7 @@ def _convert_captions_to_tensor(
     captions: list[str], vocab: dict[str, int]
 ) -> tuple[torch.Tensor, torch.Tensor]:
     padded_captions_str = pad_sequence(
-        [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions],
+        [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions],   
         batch_first=True,
     )
 
