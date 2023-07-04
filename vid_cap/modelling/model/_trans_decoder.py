@@ -27,7 +27,7 @@ class TransformerNet(nn.Module):
         self.dec_pe = PositionalEncoding(embedding_dim, max_len=max_seq_len)
 
         # encoder/decoder layer
-        dec_layer = nn.TransformerDecoderLayer(embedding_dim, nheads, batch_first=True)
+        dec_layer = nn.TransformerDecoderLayer(embedding_dim, nheads, activation="gelu", batch_first=True)
         self.decoder = nn.TransformerDecoder(dec_layer, num_layers=n_layers)
 
         # final dense layer

@@ -61,16 +61,14 @@ def main(
     device = GPU_MODEL
 
     logger.info(f"Training with device : {device}")
-    hparams = {}
-    hparams["data_dir"] = data_dir
-    hparams["shuffle"]=shuffle
-    hparams["batch_size"]=batch_size
-    hparams["n_heads"]=n_heads
-    hparams["n_layers"]=n_layers
-    hparams["use_gpu"]=use_gpu
-    hparams["epochs"]=epochs
-    hparams["lr"]=lr
-    hparams["vocab_len"]=vocab_len
+    hparams = { "data_dir": data_dir,
+               "shuffle": shuffle,
+               "batch_size": batch_size,
+               "n_heads": n_heads,
+               "n_layers": n_layers,
+               "use_gpu": use_gpu,
+               "epochs": epochs,"lr": lr,
+               "vocab_len": vocab_len}
     [logger.debug(f'hparams::{k} : {v}') for k,v in hparams.items()]
 
 
