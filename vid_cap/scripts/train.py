@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import click
+from loguru import logger
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
@@ -13,12 +14,15 @@ from vid_cap.dataset import VideoFeatDataset
 from vid_cap.modelling import train
 from vid_cap.modelling.model import TransformerNet
 
+"""Identify if arch is x86_64 or ARM"""
+import platform
+
 _MAX_TGT_LEN = 100
 
 
 @click.command("train")
 @click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
-@click.option("--shuffle", is_flag=True, type=bool, help="Shuffle datasets")
+@click.option("--shuffle", is_flag=True, default=True, type=bool, help="Shuffle datasets")
 @click.option("--batch_size", default=64, type=click.IntRange(1, 512), help="Batch size.")
 @click.option("--n-heads", default=8, type=click.IntRange(1, 128), help="Number of heads.")
 @click.option(
@@ -53,7 +57,22 @@ def main(
     :param lr: Learning rate.
     :param vocab_len: Vocab length.
     """
-    device = torch.device("cuda") if use_gpu and torch.cuda.is_available() else torch.device("cpu")
+    GPU_MODEL = torch.device('mps') if platform.processor()=='arm' else torch.device("cuda") if use_gpu and torch.cuda.is_available() else torch.device("cpu")
+    device = GPU_MODEL
+
+    logger.info(f"Training with device : {device}")
+    hparams = {}
+    hparams["data_dir"] = data_dir
+    hparams["shuffle"]=shuffle
+    hparams["batch_size"]=batch_size
+    hparams["n_heads"]=n_heads
+    hparams["n_layers"]=n_layers
+    hparams["use_gpu"]=use_gpu
+    hparams["epochs"]=epochs
+    hparams["lr"]=lr
+    hparams["vocab_len"]=vocab_len
+    [logger.debug(f'hparams::{k} : {v}') for k,v in hparams.items()]
+
 
     train_dataset = VideoFeatDataset(
         data_dir / "train" / "videos", data_dir / "train" / "captions.parquet", vocab_len=vocab_len
