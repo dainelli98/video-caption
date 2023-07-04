@@ -30,7 +30,7 @@ _MAX_TGT_LEN = 100
 )
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to train with GPU")
 @click.option("--epochs", default=10, type=click.IntRange(1, 10000), help="Number of epochs.")
-@click.option("--lr", default=1e-3, type=click.FloatRange(1e-6, 1e-1), help="Learning rate.")
+@click.option("--lr", default=1e-2, type=click.FloatRange(1e-6, 1e-1), help="Learning rate.")
 @click.option("--vocab-len", default=1000, type=click.IntRange(1, 100000), help="Vocab length.")
 def main(
     data_dir: Path,
@@ -79,7 +79,7 @@ def main(
         data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", vocab_len=vocab_len
     )
 
-    train_loader = DataLoader(train_dataset, batch_size, shuffle)
+    train_loader = DataLoader(train_dataset, batch_size, shuffle, pin_memory=True, num_workers=3, prefetch_factor=True)
     valid_loader = DataLoader(valid_dataset, batch_size)
 
     embed_dim = train_dataset[0][0].shape[1]
