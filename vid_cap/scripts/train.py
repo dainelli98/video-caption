@@ -30,7 +30,7 @@ _MAX_TGT_LEN = 100
 )
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to train with GPU")
 @click.option("--epochs", default=10, type=click.IntRange(1, 10000), help="Number of epochs.")
-@click.option("--lr", default=1e-2, type=click.FloatRange(1e-6, 1e-1), help="Learning rate.")
+@click.option("--lr", default=1e-3, type=click.FloatRange(1e-6, 1e-1), help="Learning rate.")
 @click.option("--vocab-len", default=1000, type=click.IntRange(1, 100000), help="Vocab length.")
 def main(
     data_dir: Path,
@@ -67,7 +67,8 @@ def main(
                "n_heads": n_heads,
                "n_layers": n_layers,
                "use_gpu": use_gpu,
-               "epochs": epochs,"lr": lr,
+               "epochs": epochs,
+               "lr": lr,
                "vocab_len": vocab_len}
     [logger.debug(f'hparams::{k} : {v}') for k,v in hparams.items()]
 

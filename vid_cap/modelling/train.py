@@ -86,12 +86,14 @@ def _train_one_epoch(
         optimizer.zero_grad()
 
         outputs = model(inputs, captions_str)
+        captions_end = captions_end.view(-1)
 
-        captions_end = (
-            torch.nn.functional.one_hot(captions_end, num_classes=1000).float().to(device)
-        )
+        # captions_end_one_hot = (
+        #     torch.nn.functional.one_hot(captions_end, num_classes=vocab.__len__()).float().to(device)
+        # )
 
-        loss = loss_fn(outputs, captions_end)
+        flatten_outputs = outputs.view(-1, vocab.__len__())
+        loss = loss_fn(flatten_outputs, captions_end)
         loss.backward()
 
         optimizer.step()
@@ -147,7 +149,8 @@ def _validate_one_epoch(
                 torch.nn.functional.one_hot(captions_end, num_classes=1000).float().to(device)
             )
 
-            loss = loss_fn(outputs, captions_end_one_hot)
+            flatten_outputs = outputs.view(-1, outputs.shape[0] * outputs.shape[1])
+            loss = loss_fn(flatten_outputs, captions_end_one_hot)
             running_loss += loss.item()
 
             # Compute accuracy
