@@ -88,10 +88,6 @@ def _train_one_epoch(
         outputs = model(inputs, captions_str)
         captions_end = captions_end.view(-1)
 
-        # captions_end_one_hot = (
-        #     torch.nn.functional.one_hot(captions_end, num_classes=vocab.__len__()).float().to(device)
-        # )
-
         flatten_outputs = outputs.view(-1, vocab.__len__())
         loss = loss_fn(flatten_outputs, captions_end)
         loss.backward()
@@ -145,20 +141,17 @@ def _validate_one_epoch(
 
             outputs = model(inputs, captions_str)
 
-            captions_end_one_hot = (
-                torch.nn.functional.one_hot(captions_end, num_classes=1000).float().to(device)
-            )
+            captions_end = captions_end.view(-1)
+            outputs = outputs.view(-1, vocab.__len__())
 
             flatten_outputs = outputs.view(-1, outputs.shape[0] * outputs.shape[1])
-            loss = loss_fn(flatten_outputs, captions_end_one_hot)
+            loss = loss_fn(flatten_outputs, captions_end)
             running_loss += loss.item()
 
             # Compute accuracy
             _, predicted = torch.max(outputs, 1)
             total_predictions += len(captions_end)
-            captions_length = captions_end.size(1)
-            predicted_truncated = predicted[:, :captions_length]
-            correct_predictions += torch.sum(predicted_truncated == captions_end).item()
+            correct_predictions += torch.sum(predicted == captions_end).item()
 
     avg_loss = running_loss / len(val_loader)
     accuracy = correct_predictions / total_predictions
