@@ -112,6 +112,8 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+!.vscode/launch.json
+!.vscode/tasks.json
 
 # Data files
 data/*

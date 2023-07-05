@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Script to train decoder."""
+import platform
 from pathlib import Path
 
 import click
-from loguru import logger
 import torch
+from loguru import logger
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -13,9 +14,6 @@ from vid_cap import DATA_DIR
 from vid_cap.dataset import VideoFeatDataset
 from vid_cap.modelling import train
 from vid_cap.modelling.model import TransformerNet
-
-"""Identify if arch is x86_64 or ARM"""
-import platform
 
 _MAX_TGT_LEN = 100
 
@@ -57,21 +55,30 @@ def main(
     :param lr: Learning rate.
     :param vocab_len: Vocab length.
     """
-    GPU_MODEL = torch.device('mps') if platform.processor()=='arm' else torch.device("cuda") if use_gpu and torch.cuda.is_available() else torch.device("cpu")
-    device = GPU_MODEL
+    gpu_model = "cpu"
+
+    if use_gpu:
+        if platform.processor() == "arm":
+            gpu_model = "mps"
+        elif torch.cuda.is_available():
+            gpu_model = "cuda"
+
+    device = torch.device(gpu_model)
 
     logger.info(f"Training with device : {device}")
-    hparams = { "data_dir": data_dir,
-               "shuffle": shuffle,
-               "batch_size": batch_size,
-               "n_heads": n_heads,
-               "n_layers": n_layers,
-               "use_gpu": use_gpu,
-               "epochs": epochs,
-               "lr": lr,
-               "vocab_len": vocab_len}
-    [logger.debug(f'hparams::{k} : {v}') for k,v in hparams.items()]
+    hparams = {
+        "data_dir": data_dir,
+        "shuffle": shuffle,
+        "batch_size": batch_size,
+        "n_heads": n_heads,
+        "n_layers": n_layers,
+        "use_gpu": use_gpu,
+        "epochs": epochs,
+        "lr": lr,
+        "vocab_len": vocab_len,
+    }
 
+    [logger.debug(f"hparams::{k} : {v}") for k, v in hparams.items()]
 
     train_dataset = VideoFeatDataset(
         data_dir / "train" / "videos", data_dir / "train" / "captions.parquet", vocab_len=vocab_len
@@ -80,7 +87,9 @@ def main(
         data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", vocab_len=vocab_len
     )
 
-    train_loader = DataLoader(train_dataset, batch_size, shuffle, pin_memory=True, num_workers=3, prefetch_factor=True)
+    train_loader = DataLoader(
+        train_dataset, batch_size, shuffle, pin_memory=True, num_workers=3, prefetch_factor=True
+    )
     valid_loader = DataLoader(valid_dataset, batch_size)
 
     embed_dim = train_dataset[0][0].shape[1]

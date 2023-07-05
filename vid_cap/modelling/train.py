@@ -36,7 +36,6 @@ def train(
     :param tb_writer: Tensorboard writer.
     :return: Trained model.
     """
-
     for epoch in range(num_epochs):
         logger.info("Starting epoch {}/{}", epoch + 1, num_epochs)
         train_loss = _train_one_epoch(
@@ -170,7 +169,7 @@ def _convert_captions_to_tensor(
     captions: list[str], vocab: dict[str, int]
 ) -> tuple[torch.Tensor, torch.Tensor]:
     padded_captions_str = pad_sequence(
-        [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions],   
+        [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions],
         batch_first=True,
     )
 
