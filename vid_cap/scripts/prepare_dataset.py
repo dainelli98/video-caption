@@ -43,7 +43,7 @@ def main(data_dir: Path) -> None:
 
         (data_dir / "output" / split / "videos").mkdir(parents=True, exist_ok=True)
 
-        out_caps = Parallel(n_jobs=1, verbose=1000)(
+        out_caps = Parallel(n_jobs=-1, verbose=1000)(
             delayed(_process_video)(data_dir, split, videos_path, captions, counter, total, video)
             for counter, video in enumerate(videos_path.iterdir(), 1)
         )
