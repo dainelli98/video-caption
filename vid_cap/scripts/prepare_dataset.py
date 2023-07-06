@@ -19,6 +19,7 @@ _FLOAT16_MIN = np.finfo(np.float16).min
 
 _SAMPLE_PERIOD = 32
 
+
 @click.command("prepare-dataset")
 @click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
 def main(data_dir: Path) -> None:
@@ -50,14 +51,33 @@ def main(data_dir: Path) -> None:
         pd.concat(out_caps).to_parquet(data_dir / "output" / split / "captions.parquet")
 
 
-def _process_video(data_dir, split, videos_path, captions, counter, total, video):
+def _process_video(
+    data_dir: Path,
+    split: str,
+    videos_path: Path,
+    captions: pd.DataFrame,
+    counter: int,
+    total: int,
+    video: Path,
+) -> pd.DataFrame:
+    """Process video and save it to disk.
+
+    :param data_dir: Directory with data.
+    :param split: Dataset split.
+    :param videos_path: Path to videos.
+    :param captions: Captions.
+    :param counter: Iteration counter.
+    :param total: Total amount of videos.
+    :param video: Video path.
+    :return: Processed video metadata.
+    """
     logger.info(f"Processing video {counter+1}/{total} from {split} set")
 
     video_path = videos_path / video
     stem = video.stem
 
     feat_vec = pre.gen_feat_vecs(video_path, 16)[0, :, :]
-    
+
     feat_vec = feat_vec[::_SAMPLE_PERIOD, :]
 
     feat_vec = (feat_vec - _TRAIN_MIN) / (_TRAIN_MAX - _TRAIN_MIN)
