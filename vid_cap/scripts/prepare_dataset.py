@@ -15,7 +15,12 @@ _SAMPLE_PERIOD = 32
 
 
 @click.command("prepare-dataset")
-@click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
+@click.option(
+    "--data-dir",
+    default=DATA_DIR,
+    type=click.Path(exists=True, path_type=True),
+    help="Data directory",
+)
 def main(data_dir: Path) -> None:
     """Prepare dataset with ``VideoMAE``.
 
