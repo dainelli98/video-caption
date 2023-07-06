@@ -65,7 +65,7 @@ def _process_video(
     :param video: Video path.
     :return: Processed video metadata.
     """
-    logger.info(f"Processing video {counter+1}/{total} from {split} set")
+    logger.info(f"Processing video {counter}/{total} from {split} set")
 
     video_path = videos_path / video
     stem = video.stem
