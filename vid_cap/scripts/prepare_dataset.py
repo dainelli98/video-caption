@@ -11,12 +11,6 @@ from loguru import logger
 from vid_cap import DATA_DIR
 from vid_cap.modelling import preprocessing as pre
 
-_TRAIN_MAX = 488.92505
-_TRAIN_MIN = -96.46513
-
-_FLOAT16_MAX = np.finfo(np.float16).max
-_FLOAT16_MIN = np.finfo(np.float16).min
-
 _SAMPLE_PERIOD = 32
 
 
@@ -80,11 +74,7 @@ def _process_video(
 
     feat_vec = feat_vec[::_SAMPLE_PERIOD, :]
 
-    feat_vec = (feat_vec - _TRAIN_MIN) / (_TRAIN_MAX - _TRAIN_MIN)
-
-    feat_vec = feat_vec * (_FLOAT16_MAX - _FLOAT16_MIN) + _FLOAT16_MIN
-
-    feat_vec = feat_vec.round().clip(_FLOAT16_MIN, _FLOAT16_MAX).astype(np.float16)
+    feat_vec = feat_vec.astype(np.float16)
 
     np.save(data_dir / "output" / split / "videos" / f"{counter}.npy", feat_vec)
 
