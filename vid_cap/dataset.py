@@ -47,7 +47,7 @@ class VideoFeatDataset(Dataset):
             video_dir = Path(video_dir)
 
         self._videos = {
-            video: torch.tensor(np.load(video_dir / f"{video}.npy"), torch.int8)
+            video: torch.tensor(np.load(video_dir / f"{video}.npy"), torch.float16)
             for video in self._captions["video"].unique()
         }
 

@@ -14,9 +14,10 @@ from vid_cap.modelling import preprocessing as pre
 _TRAIN_MAX = 488.92505
 _TRAIN_MIN = -96.46513
 
-_INT8_MAX = np.iinfo(np.int8).max
-_INT8_MIN = np.iinfo(np.int8).min
+_FLOAT16_MAX = np.finfo(np.float16).max
+_FLOAT16_MIN = np.finfo(np.float16).min
 
+_SAMPLE_PERIOD = 32
 
 @click.command("prepare-dataset")
 @click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
@@ -41,7 +42,7 @@ def main(data_dir: Path) -> None:
 
         (data_dir / "output" / split / "videos").mkdir(parents=True, exist_ok=True)
 
-        out_caps = Parallel(n_jobs=-1, verbose=1000)(
+        out_caps = Parallel(n_jobs=1, verbose=1000)(
             delayed(_process_video)(data_dir, split, videos_path, captions, counter, total, video)
             for counter, video in enumerate(videos_path.iterdir(), 1)
         )
@@ -56,12 +57,14 @@ def _process_video(data_dir, split, videos_path, captions, counter, total, video
     stem = video.stem
 
     feat_vec = pre.gen_feat_vecs(video_path, 16)[0, :, :]
+    
+    feat_vec = feat_vec[::_SAMPLE_PERIOD, :]
 
     feat_vec = (feat_vec - _TRAIN_MIN) / (_TRAIN_MAX - _TRAIN_MIN)
 
-    feat_vec = feat_vec * (_INT8_MAX - _INT8_MIN) + _INT8_MIN
+    feat_vec = feat_vec * (_FLOAT16_MAX - _FLOAT16_MIN) + _FLOAT16_MIN
 
-    feat_vec = feat_vec.round().clip(_INT8_MIN, _INT8_MAX).astype(np.int8)
+    feat_vec = feat_vec.round().clip(_FLOAT16_MIN, _FLOAT16_MAX).astype(np.float16)
 
     np.save(data_dir / "output" / split / "videos" / f"{counter}.npy", feat_vec)
 
