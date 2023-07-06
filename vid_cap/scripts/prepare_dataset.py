@@ -18,7 +18,7 @@ _SAMPLE_PERIOD = 32
 @click.option(
     "--data-dir",
     default=DATA_DIR,
-    type=click.Path(exists=True, path_type=True),
+    type=click.Path(exists=True, path_type=Path),
     help="Data directory",
 )
 def main(data_dir: Path) -> None:
