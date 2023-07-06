@@ -20,7 +20,7 @@ class VideoFeatDataset(Dataset):
     """
 
     _captions: pd.DataFrame
-    _video_dir: Path
+    _videos: dict[int, torch.Tensor]
     _vocab: dict[str, int] | None
 
     def __init__(
@@ -33,7 +33,6 @@ class VideoFeatDataset(Dataset):
         caps_per_vid = min(max(caps_per_vid, 1), 20)
 
         self._captions = pd.read_parquet(caps_file)[lambda x: x["n_cap"] <= caps_per_vid]
-        self._video_dir = Path(video_dir)
 
         order = self._captions["caption"].str.len().sort_values().index
         self._captions = self._captions.reindex(order).reset_index(drop=True)
@@ -43,6 +42,14 @@ class VideoFeatDataset(Dataset):
 
         else:
             self._vocab = None
+
+        if not isinstance(video_dir, Path):
+            video_dir = Path(video_dir)
+
+        self._videos = {
+            video: torch.tensor(np.load(video_dir / f"{video}.npy"), torch.int8)
+            for video in self._captions["video"].unique()
+        }
 
     @property
     def vocab(self) -> dict[str, int]:
@@ -84,7 +91,7 @@ class VideoFeatDataset(Dataset):
         truncated_sorted_vocab = sorted_vocab[:vocab_len]
         self._vocab = {token: idx for idx, token in enumerate(truncated_sorted_vocab)}
 
-    def __getitem__(self, index: int) -> tuple[np.ndarray, str]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, str]:
         """Get item from dataset.
 
         :param index: Index of item.
@@ -92,7 +99,7 @@ class VideoFeatDataset(Dataset):
         """
         caption_row = self._captions.iloc[index]
         return (
-            torch.tensor(np.load(self._video_dir / f"{caption_row['video']}.npy")),
+            self._videos[caption_row["video"]],
             caption_row["caption"],
         )
 

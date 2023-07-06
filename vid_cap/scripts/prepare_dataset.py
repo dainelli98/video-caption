@@ -5,10 +5,17 @@ from pathlib import Path
 import click
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from loguru import logger
 
 from vid_cap import DATA_DIR
 from vid_cap.modelling import preprocessing as pre
+
+_TRAIN_MAX = 488.92505
+_TRAIN_MIN = -96.46513
+
+_INT8_MAX = np.iinfo(np.int8).max
+_INT8_MIN = np.iinfo(np.int8).min
 
 
 @click.command("prepare-dataset")
@@ -30,38 +37,43 @@ def main(data_dir: Path) -> None:
 
         captions = pd.read_csv(captions_path, dtype_backend="pyarrow")[["video_id", "caption"]]
 
-        counter = 0
         total = len(list(videos_path.iterdir()))
-
-        out_caps = []
 
         (data_dir / "output" / split / "videos").mkdir(parents=True, exist_ok=True)
 
-        for video in videos_path.iterdir():
-            logger.info(f"Processing video {counter+1}/{total} from {split} set")
-
-            video_path = videos_path / video
-            stem = video.stem
-
-            feat_vec = pre.gen_feat_vecs(video_path, 16)[0, :, :]
-
-            np.save(data_dir / "output" / split / "videos" / f"{counter}.npy", feat_vec)
-
-            vid_caps = captions.loc[lambda x: x["video_id"] == stem, "caption"].to_list()
-
-            out_caps.append(
-                pd.DataFrame(
-                    {
-                        "video": counter,
-                        "n_cap": range(1, len(vid_caps) + 1),
-                        "caption": vid_caps,
-                    }
-                )
-            )
-
-            counter += 1
+        out_caps = Parallel(n_jobs=-1, verbose=1000)(
+            delayed(_process_video)(data_dir, split, videos_path, captions, counter, total, video)
+            for counter, video in enumerate(videos_path.iterdir(), 1)
+        )
 
         pd.concat(out_caps).to_parquet(data_dir / "output" / split / "captions.parquet")
+
+
+def _process_video(data_dir, split, videos_path, captions, counter, total, video):
+    logger.info(f"Processing video {counter+1}/{total} from {split} set")
+
+    video_path = videos_path / video
+    stem = video.stem
+
+    feat_vec = pre.gen_feat_vecs(video_path, 16)[0, :, :]
+
+    feat_vec = (feat_vec - _TRAIN_MIN) / (_TRAIN_MAX - _TRAIN_MIN)
+
+    feat_vec = feat_vec * (_INT8_MAX - _INT8_MIN) + _INT8_MIN
+
+    feat_vec = feat_vec.round().clip(_INT8_MIN, _INT8_MAX).astype(np.int8)
+
+    np.save(data_dir / "output" / split / "videos" / f"{counter}.npy", feat_vec)
+
+    vid_caps = captions.loc[lambda x: x["video_id"] == stem, "caption"].to_list()
+
+    return pd.DataFrame(
+        {
+            "video": counter,
+            "n_cap": range(1, len(vid_caps) + 1),
+            "caption": vid_caps,
+        }
+    )
 
 
 if __name__ == "__main__":
