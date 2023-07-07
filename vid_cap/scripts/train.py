@@ -20,7 +20,7 @@ _MAX_TGT_LEN = 100
 
 @click.command("train")
 @click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
-@click.option("--shuffle", is_flag=True, default=True, type=bool, help="Shuffle datasets")
+@click.option("--shuffle", is_flag=True, default=False, type=bool, help="Shuffle datasets")
 @click.option("--batch_size", default=64, type=click.IntRange(1, 512), help="Batch size.")
 @click.option("--n-heads", default=8, type=click.IntRange(1, 128), help="Number of heads.")
 @click.option(
@@ -29,7 +29,7 @@ _MAX_TGT_LEN = 100
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to train with GPU")
 @click.option("--epochs", default=10, type=click.IntRange(1, 10000), help="Number of epochs.")
 @click.option("--lr", default=1e-3, type=click.FloatRange(1e-6, 1e-1), help="Learning rate.")
-@click.option("--vocab-len", default=1000, type=click.IntRange(1, 100000), help="Vocab length.")
+@click.option("--vocab-len", default=11000, type=click.IntRange(1, 100000), help="Vocab length.")
 def main(
     data_dir: Path,
     shuffle: bool,
@@ -90,7 +90,7 @@ def main(
     train_loader = DataLoader(
         train_dataset, batch_size, shuffle, pin_memory=True, num_workers=3, prefetch_factor=True
     )
-    valid_loader = DataLoader(valid_dataset, batch_size)
+    valid_loader = DataLoader(valid_dataset, batch_size, shuffle)
 
     embed_dim = train_dataset.shape[1]
 
@@ -104,6 +104,7 @@ def main(
 
     model = train.train(
         model,
+        gpu_model,
         train_loader,
         valid_loader,
         train_dataset.vocab,

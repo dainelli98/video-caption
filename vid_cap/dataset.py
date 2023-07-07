@@ -34,8 +34,9 @@ class VideoFeatDataset(Dataset):
 
         self._captions = pd.read_parquet(caps_file)[lambda x: x["n_cap"] <= caps_per_vid]
 
-        order = self._captions["caption"].str.len().sort_values().index
-        self._captions = self._captions.reindex(order).reset_index(drop=True)
+        order = self._captions["caption"].apply(lambda x: len(x.split())).argsort()
+        self._captions = self._captions.iloc[order].reset_index(drop=True)
+
 
         if vocab_len is not None:
             self.build_vocab(vocab_len)

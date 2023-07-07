@@ -4,7 +4,6 @@
       "args": [
         "train",
         "--use-gpu",
-        "--shuffle"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
