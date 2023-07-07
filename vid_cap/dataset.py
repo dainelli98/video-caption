@@ -47,7 +47,7 @@ class VideoFeatDataset(Dataset):
             video_dir = Path(video_dir)
 
         self._videos = {
-            video: torch.tensor(np.load(video_dir / f"{video}.npy"), torch.float16)
+            video: torch.tensor(np.load(video_dir / f"{video}.npy"), dtype=torch.float16)
             for video in self._captions["video"].unique()
         }
 
@@ -109,3 +109,11 @@ class VideoFeatDataset(Dataset):
         :return: Length of dataset.
         """
         return self._captions.shape[0]
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        """Get shape of dataset.
+
+        :return: Shape of dataset.
+        """
+        return self._videos[1].shape

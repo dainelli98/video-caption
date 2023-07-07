@@ -92,7 +92,7 @@ def main(
     )
     valid_loader = DataLoader(valid_dataset, batch_size)
 
-    embed_dim = train_dataset[0][0].shape[1]
+    embed_dim = train_dataset.shape[1]
 
     model = TransformerNet(train_dataset.vocab_len, embed_dim, n_heads, n_layers, _MAX_TGT_LEN).to(
         device
