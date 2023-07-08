@@ -86,12 +86,6 @@ def _train_one_epoch(
         inputs, captions = data
         captions_str, captions_end = _convert_captions_to_tensor(list(captions), vocab)
 
-        # Shuffle the batch samples
-        shuffled_indices = torch.randperm(inputs.size(0))
-        inputs = inputs[shuffled_indices]                      
-        captions_str = captions_str[shuffled_indices]
-        captions_end = captions_end[shuffled_indices]
-        
         inputs = inputs.to(device)
         captions_str = captions_str.to(device)
         captions_end = captions_end.to(device)
@@ -99,10 +93,10 @@ def _train_one_epoch(
         optimizer.zero_grad()
 
         outputs = model(inputs, captions_str)
-        captions_end = captions_end.view(-1)
+        flatten_captions_end = captions_end.view(-1)
 
         flatten_outputs = outputs.view(-1, vocab.__len__())
-        loss = loss_fn(flatten_outputs, captions_end)
+        loss = loss_fn(flatten_outputs, flatten_captions_end)
         loss.backward()
 
         optimizer.step()
@@ -153,12 +147,6 @@ def _validate_one_epoch(
 
             captions_str, captions_end = _convert_captions_to_tensor(list(captions), vocab)
 
-            # Shuffle the batch samples
-            shuffled_indices = torch.randperm(inputs.size(0))
-            inputs = inputs[shuffled_indices]                      
-            captions_str = captions_str[shuffled_indices]
-            captions_end = captions_end[shuffled_indices]
-
             inputs = inputs.to(device)
             captions_str = captions_str.to(device)
             captions_end = captions_end.to(device)
@@ -166,10 +154,10 @@ def _validate_one_epoch(
             outputs = model(inputs, captions_str)
             
             #compute loss
-            outputs_loss = outputs.view(-1, vocab.__len__())
-            captions_end_loss = captions_end.view(-1)
+            flatten_outputs = outputs.view(-1, vocab.__len__())
+            flatten_captions_end = captions_end.view(-1)
 
-            loss = loss_fn(outputs_loss, captions_end_loss)
+            loss = loss_fn(flatten_outputs, flatten_captions_end)
             running_loss += loss.item()
             
             # Compute BLEU score
@@ -230,6 +218,6 @@ def _convert_tensor_to_caption(caption_indices, vocab: dict[str, int]) -> str:
         word = next((key for key, val in vocab.items() if val == idx), '<unk>')
         words.append(word)
 
-    words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
+    words = [word for word in words if word not in ["<sos>", "<eos>"]]
     decoded_caption = " ".join(words)
     return decoded_caption

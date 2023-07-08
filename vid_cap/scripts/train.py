@@ -5,6 +5,7 @@ from pathlib import Path
 
 import click
 import torch
+import random
 from loguru import logger
 from torch import nn, optim
 from torch.utils.data import DataLoader
@@ -88,9 +89,11 @@ def main(
     )
 
     train_loader = DataLoader(
-        train_dataset, batch_size, shuffle, pin_memory=True, num_workers=3, prefetch_factor=True
+        train_dataset, batch_size, shuffle=False, pin_memory=True, num_workers=3, prefetch_factor=True
     )
-    valid_loader = DataLoader(valid_dataset, batch_size, shuffle)
+    train_loader = random.sample(list(train_loader), len(train_loader))
+
+    valid_loader = DataLoader(valid_dataset, batch_size, shuffle=False)
 
     embed_dim = train_dataset.shape[1]
 
