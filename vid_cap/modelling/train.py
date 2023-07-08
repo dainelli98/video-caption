@@ -2,7 +2,9 @@
 """Train - decoder."""
 import torch
 import tqdm
-from nltk.translate.bleu_score import sentence_bleu
+
+from torcheval.metrics import BLEUScore
+
 from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
@@ -142,6 +144,8 @@ def _validate_one_epoch(
     # total_predictions = 0
     decoded_predictions = []
     decoded_targets = []
+    bleu_metric = BLEUScore(n_gram=4)
+    bleu_scores = []
 
     with torch.no_grad():
         for data in tqdm.tqdm(val_loader, f"Validation epoch {epoch + 1}"):
@@ -160,48 +164,36 @@ def _validate_one_epoch(
             captions_end = captions_end.to(device)
 
             outputs = model(inputs, captions_str)
-
-            decoded_targets.append(_convert_tensor_to_caption(captions_end[2], vocab))
-            decoded_predictions.append(_convert_tensor_to_caption(torch.argmax(outputs[2].view(-1, outputs.size(-1)), dim=1), vocab))
-
-            outputs = outputs.view(-1, vocab.__len__())
-
-            captions_end = captions_end.view(-1)
-
-            loss = loss_fn(outputs, captions_end)
-            running_loss += loss.item()
-
-            # Compute BLEU score
-            references = [[caption.split()] for caption in captions]
-            hypotheses = [torch.argmax(output.view(-1, outputs.size(-1)), dim=1).tolist() for output in outputs.split(1)]
-
-            bleu_score = sum(sentence_bleu(references, hypothesis) for references, hypothesis in zip(references, hypotheses)) / len(hypotheses)
-
-            # outputs_list.extend(torch.argmax(outputs.cpu(), dim=1).tolist())
-            # targets_list.extend(captions_end.cpu().tolist())
-
-            # Compute accuracy
-            # _, predicted = torch.max(outputs, 1)
-            # total_predictions += len(captions_end)
-            # correct_predictions += torch.sum(predicted == captions_end).item()
             
+            #compute loss
+            outputs_loss = outputs.view(-1, vocab.__len__())
+            captions_end_loss = captions_end.view(-1)
 
+            loss = loss_fn(outputs_loss, captions_end_loss)
+            running_loss += loss.item()
+            
+            # Compute BLEU score
+            [decoded_targets.append(_convert_tensor_to_caption(caption, vocab)) for caption in captions_end]
+            outputs_normalized = torch.argmax(outputs, dim=2)
+            [decoded_predictions.append(_convert_tensor_to_caption(output, vocab)) for output in outputs_normalized]
+            
+            bleu_metric.update(decoded_targets, decoded_predictions)
+            bleu_scores.append(bleu_metric.compute())
+                
     avg_loss = running_loss / len(val_loader)
-    # accuracy = correct_predictions / total_predictions
-
+    avg_bleu_metric = torch.mean(torch.stack(bleu_scores))
     logger.info("Validation loss: {}", avg_loss)
-    logger.info("Validation BLEU score: {}", bleu_score)
-    # logger.info("Validation accuracy: {}", accuracy)
-
+    logger.info("Validation BLEU score: {}", avg_bleu_metric)
+    
     if tb_writer is not None:
         tb_writer.add_scalar("Loss/validation", avg_loss, epoch)
-        tb_writer.add_scalar("BLEU/validation", bleu_score, epoch)
+        tb_writer.add_scalar("BLEU/validation", avg_bleu_metric, epoch)
 
     print("Trgt: ", decoded_targets[4])
     print("Pred: ", decoded_predictions[4])
         
 
-    return avg_loss, bleu_score
+    return avg_loss, avg_bleu_metric
 
 
 def _convert_captions_to_tensor(
@@ -219,7 +211,6 @@ def _convert_captions_to_tensor(
     )
 
     return padded_captions_str, padded_captions_end
-
 
 def _convert_tokens_to_ids(tokens: str, vocab: dict[str, int]) -> list[int]:
     return [vocab.get(token, 1) for token in tokens.split()]
@@ -239,6 +230,6 @@ def _convert_tensor_to_caption(caption_indices, vocab: dict[str, int]) -> str:
         word = next((key for key, val in vocab.items() if val == idx), '<unk>')
         words.append(word)
 
-    words = [word for word in words if word not in ["<sos>", "<eos>"]]
+    words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
     decoded_caption = " ".join(words)
     return decoded_caption
