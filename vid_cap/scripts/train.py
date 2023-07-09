@@ -109,9 +109,6 @@ def main(
         device
     )
 
-    if gpu_model == "cuda":
-        model.cuda()
-
     writer = SummaryWriter()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9)
@@ -119,7 +116,7 @@ def main(
 
     criterion = nn.CrossEntropyLoss()
 
-    model = train.train(
+    model, train_losses, val_losses = train.train(
         model,
         shuffle,
         train_loader,
@@ -133,6 +130,8 @@ def main(
     )
 
     torch.save(model.state_dict(), data_dir / "output" / "model")
+    print(train_losses)
+    print(val_losses)
 
 
 if __name__ == "__main__":
