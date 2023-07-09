@@ -53,7 +53,7 @@ class TransformerNet(nn.Module):
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
         return mask.float().masked_fill(mask == 0, float("-inf")).masked_fill(mask == 1, float(0.0))
 
-    def forward(self, src: torch.Tensor, tgt: torch.Tensor, has_mask: bool = True) -> torch.Tensor:
+    def forward(self, src: torch.Tensor, tgt: torch.Tensor, has_mask: bool = False) -> torch.Tensor:
         tgt = self.dec_embedding(tgt)
         tgt = self.dec_pe(tgt)
         src = self.dec_pe(src)

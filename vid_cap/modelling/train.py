@@ -2,6 +2,7 @@
 """Train - decoder."""
 import torch
 import tqdm
+import random
 
 from torcheval.metrics import BLEUScore
 
@@ -81,6 +82,7 @@ def _train_one_epoch(
     """
     model.train()
     running_loss = 0.0
+    training_loader = random.sample(list(training_loader), len(training_loader))
 
     for data in tqdm.tqdm(training_loader, f"Train epoch {epoch + 1}"):
         inputs, captions = data
@@ -187,9 +189,8 @@ def _validate_one_epoch(
 def _convert_captions_to_tensor(
     captions: list[str], vocab: dict[str, int]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    x = [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions]
     padded_captions_str = pad_sequence(
-        x,
+        [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions],
         batch_first=True,
     )
 

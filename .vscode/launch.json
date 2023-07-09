@@ -4,6 +4,9 @@
       "args": [
         "train",
         "--use-gpu",
+        "--caps-per-vid=2",
+        "--n-layers=6",
+        "--lr=0.0001"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",

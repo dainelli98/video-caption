@@ -7,7 +7,10 @@
             "command": "vid-cap",
             "args": [
                 "train",
-                "--use-gpu"
+                "--use-gpu",
+                "--caps-per-vid=2",
+                "--n-layers=6",
+                "--lr=0.0001"
             ],
         },
         {
