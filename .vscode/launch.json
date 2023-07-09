@@ -4,6 +4,11 @@
       "args": [
         "train",
         "--use-gpu",
+        "--shuffle",
+        "--vocab-len",
+        "3000",
+        "--n-captions",
+        "5"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",

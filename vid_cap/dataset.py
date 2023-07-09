@@ -15,7 +15,7 @@ class VideoFeatDataset(Dataset):
     :param video_dir: Directory with videos.
     :param caps_file: Path to captions file.
     :param caps_per_vid: Amount of captions per video, min=1, max=20.
-        Defaults to 1.
+        Defaults to ``None``.
     :param vocab_len: Amount of words for vocabulary. If ``None`` no vocab is built.
     """
 
@@ -27,16 +27,23 @@ class VideoFeatDataset(Dataset):
         self,
         video_dir: Path | str,
         caps_file: Path | str,
-        caps_per_vid: int = 1,
+        caps_per_vid: int | None = None,
         vocab_len: int | None = None,
     ) -> None:
+        if not caps_per_vid:
+            caps_per_vid = 20
+
         caps_per_vid = min(max(caps_per_vid, 1), 20)
 
-        self._captions = pd.read_parquet(caps_file)[lambda x: x["n_cap"] <= caps_per_vid]
+        self._captions = pd.read_parquet(caps_file, dtype_backend="pyarrow")[
+            lambda x: x["n_cap"] <= caps_per_vid
+        ]
 
-        order = self._captions["caption"].apply(lambda x: len(x.split())).argsort()
-        self._captions = self._captions.iloc[order].reset_index(drop=True)
+        self._captions = self._captions.assign(
+            length=lambda x: x["caption"].apply(lambda x: len(x.split()))
+        )
 
+        self._captions = self._captions.sort_values("length")
 
         if vocab_len is not None:
             self.build_vocab(vocab_len)
