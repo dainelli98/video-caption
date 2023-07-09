@@ -87,6 +87,9 @@ def _train_one_epoch(
     """
     model.train()
     running_loss = 0.0
+    decoded_predictions = []
+    decoded_targets = []
+
     if shuffle:
         logger.info("Shuffling training data")
         random.shuffle(training_loader)
@@ -102,6 +105,18 @@ def _train_one_epoch(
         optimizer.zero_grad()
 
         outputs = model(inputs, captions_str)
+
+        [
+            decoded_targets.append(_convert_tensor_to_caption(caption, vocab))
+            for caption in captions_end
+        ]
+        outputs_normalized = torch.argmax(outputs, dim=2)
+
+        [
+            decoded_predictions.append(_convert_tensor_to_caption(output, vocab))
+            for output in outputs_normalized
+        ]
+
         captions_end = captions_end.view(-1)
 
         outputs = outputs.view(-1, len(vocab))
@@ -116,6 +131,11 @@ def _train_one_epoch(
 
     if tb_writer is not None:
         tb_writer.add_scalar("Loss/train", loss, epoch)
+
+    example_idx = random.randint(0, len(decoded_predictions) - 1)
+
+    logger.info("TRAIN Trgt: {}", decoded_targets[example_idx])
+    logger.info("TRAIN Pred: {}", decoded_predictions[example_idx])
 
     return loss
 
@@ -193,8 +213,8 @@ def _validate_one_epoch(
 
     example_idx = random.randint(0, len(decoded_predictions) - 1)
 
-    logger.info("Trgt: {}", decoded_targets[example_idx])
-    logger.info("Pred: {}", decoded_predictions[example_idx])
+    logger.info("VAL Trgt: {}", decoded_targets[example_idx])
+    logger.info("VAL Pred: {}", decoded_predictions[example_idx])
 
     return avg_loss, avg_bleu_metric
 

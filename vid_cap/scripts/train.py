@@ -105,7 +105,7 @@ def main(
 
     embed_dim = train_dataset.shape[1]
 
-    model = TransformerNet(train_dataset.vocab_len, embed_dim, n_heads, n_layers, _MAX_TGT_LEN).to(
+    model = TransformerNet(train_dataset.vocab_len, embed_dim, n_heads, n_layers, _MAX_TGT_LEN, 0.2).to(
         device
     )
 

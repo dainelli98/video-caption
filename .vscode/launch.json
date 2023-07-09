@@ -5,12 +5,12 @@
         "train",
         "--use-gpu",
         "--caps-per-vid",
-        "5",
+        "8",
         "--n-layers",
         "6",
         "--shuffle",
         "--vocab-len",
-        "4000"
+        "8000"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
