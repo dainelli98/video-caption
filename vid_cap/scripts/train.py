@@ -28,10 +28,13 @@ _MAX_TGT_LEN = 100
     "--n-layers", default=4, type=click.IntRange(1, 128), help="Number of decoder layers."
 )
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to train with GPU")
-@click.option("--epochs", default=10, type=click.IntRange(1, 10000), help="Number of epochs.")
-@click.option("--vocab-len", default=2500, type=click.IntRange(1, 100000), help="Vocab length.")
+@click.option("--epochs", default=50, type=click.IntRange(1, 10000), help="Number of epochs.")
+@click.option("--vocab-len", default=8000, type=click.IntRange(1, 100000), help="Vocab length.")
 @click.option(
-    "--n-captions", default=1, type=click.IntRange(1, 20), help="Number of captions per video."
+    "--caps-per-vid",
+    default=1,
+    type=click.IntRange(1, 20),
+    help="Captions per video used in the dataset.",
 )
 def main(
     data_dir: Path,
@@ -42,7 +45,7 @@ def main(
     use_gpu: bool,
     epochs: int,
     vocab_len: int,
-    n_captions: int = 1,
+    caps_per_vid: int,
 ) -> None:
     """Train decoder.
 
@@ -56,7 +59,7 @@ def main(
     :param use_gpu: Whether to try to use GPU.
     :param epochs: Number of epochs.
     :param vocab_len: Vocab length.
-    :param n_captions: Number of captions per video.
+    :param caps_per_vid: Number of captions per video.
     """
     gpu_model = "cpu"
 
@@ -71,13 +74,13 @@ def main(
     logger.info(f"Training with device : {device}")
     hparams = {
         "data_dir": data_dir,
-        "shuffle": shuffle,
         "batch_size": batch_size,
         "n_heads": n_heads,
         "n_layers": n_layers,
         "use_gpu": use_gpu,
         "epochs": epochs,
         "vocab_len": vocab_len,
+        "caps_per_vid": caps_per_vid,
     }
 
     [logger.debug(f"hparams::{k} : {v}") for k, v in hparams.items()]
@@ -85,16 +88,18 @@ def main(
     train_dataset = VideoFeatDataset(
         data_dir / "train" / "videos",
         data_dir / "train" / "captions.parquet",
-        n_captions,
+        caps_per_vid,
         vocab_len,
     )
     valid_dataset = VideoFeatDataset(
-        data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", n_captions
+        data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", caps_per_vid
     )
 
     train_loader = DataLoader(
         train_dataset, batch_size, False, pin_memory=True, num_workers=3, prefetch_factor=True
     )
+    if shuffle:
+        train_loader = list(train_loader)
 
     valid_loader = DataLoader(valid_dataset, batch_size, shuffle=False)
 
@@ -107,11 +112,12 @@ def main(
     if gpu_model == "cuda":
         model.cuda()
 
+    writer = SummaryWriter()
+
     optimizer = torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9)
-    optimizer = NoamOptimizer(model.dec_embedding.embedding_dim, 2, 4000, optimizer)
+    optimizer = NoamOptimizer(model.dec_embedding.embedding_dim, 2, 4000, optimizer, writer)
 
     criterion = nn.CrossEntropyLoss()
-    writer = SummaryWriter()
 
     model = train.train(
         model,

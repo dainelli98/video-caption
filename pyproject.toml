@@ -89,7 +89,7 @@ exclude = ["docs"]
 ignore = [
     "ANN101", "ANN102", "B008", "D203", "D205", "D207", "D208", "D209", "D213", "D301", "FBT001",
     "FBT003", "PLE1205", "TRY003", "TRY300", "TRY400", "UP009", "FBT002", "D107", "B023", "EXE002",
-    "DTZ005", "ANN401", "PT001", "COM812", "ANN002", "ANN003", "TID252"
+    "DTZ005", "ANN401", "PT001", "COM812", "ANN002", "ANN003", "TID252", "S311"
 ]
 dummy-variable-rgx = "^test_(.*)"
 cache-dir = ".ruff_cache"

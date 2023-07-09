@@ -4,11 +4,13 @@
       "args": [
         "train",
         "--use-gpu",
+        "--caps-per-vid",
+        "5",
+        "--n-layers",
+        "6",
         "--shuffle",
         "--vocab-len",
-        "3000",
-        "--n-captions",
-        "5"
+        "4000"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Train - decoder."""
 
+import random
+
 import torch
 import tqdm
 from loguru import logger
@@ -19,7 +21,7 @@ _LOSS_FN = torch.nn.modules.loss._Loss  # noqa: SLF001
 def train(
     model: TransformerNet,
     shuffle: bool,
-    train_loader: DataLoader,
+    train_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     valid_loader: DataLoader,
     vocab: dict[str, int],
     optimizer: torch.optim.Optimizer | NoamOptimizer,
@@ -53,13 +55,15 @@ def train(
         )
         logger.info("End of epoch {}/{}. Validation loss: {}", epoch + 1, num_epochs, val_loss)
         logger.info("End of epoch {}/{}. Validation BLEU: {}", epoch + 1, num_epochs, bleu)
+        if isinstance(optimizer, NoamOptimizer):
+            logger.info("Learning rate: {}", optimizer.lr)
 
     return model
 
 
 def _train_one_epoch(
     model: TransformerNet,
-    training_loader: DataLoader,
+    training_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     shuffle: bool,
     vocab: dict[str, int],
     optimizer: torch.optim.Optimizer | NoamOptimizer,
@@ -85,6 +89,7 @@ def _train_one_epoch(
     running_loss = 0.0
     if shuffle:
         logger.info("Shuffling training data")
+        random.shuffle(training_loader)
 
     for data in tqdm.tqdm(training_loader, f"Train epoch {epoch + 1}"):
         inputs, captions = data
@@ -186,8 +191,10 @@ def _validate_one_epoch(
         tb_writer.add_scalar("Loss/validation", avg_loss, epoch)
         tb_writer.add_scalar("BLEU/validation", avg_bleu_metric, epoch)
 
-    logger.info("Trgt: {}", decoded_targets[4])
-    logger.info("Pred: {}", decoded_predictions[4])
+    example_idx = random.randint(0, len(decoded_predictions) - 1)
+
+    logger.info("Trgt: {}", decoded_targets[example_idx])
+    logger.info("Pred: {}", decoded_predictions[example_idx])
 
     return avg_loss, avg_bleu_metric
 
@@ -195,9 +202,8 @@ def _validate_one_epoch(
 def _convert_captions_to_tensor(
     captions: list[str], vocab: dict[str, int]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    x = [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions]
     padded_captions_str = pad_sequence(
-        x,
+        [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions],
         batch_first=True,
     )
 
@@ -213,15 +219,13 @@ def _convert_tokens_to_ids(tokens: str, vocab: dict[str, int]) -> list[int]:
     return [vocab.get(token, 1) for token in tokens.split()]
 
 
-def _convert_tensor_to_caption(caption_indices, vocab: dict[str, int]) -> str:
+def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, int]) -> str:
     """Decode a caption from token indices to words using the vocabulary.
 
-    :param caption_indices: List of token indices representing a caption.
+    :param caption_indices: Tensor of token indices representing a caption.
     :param vocab: Vocabulary mapping token indices to words.
     :return: Decoded caption as a string.
     """
-    # Convert indices to words
-
     caption_indices = caption_indices.cpu().numpy()
     words = []
     for idx in caption_indices:
