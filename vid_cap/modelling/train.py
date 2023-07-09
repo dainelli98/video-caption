@@ -14,6 +14,7 @@ from torcheval.metrics import BLEUScore
 from vid_cap.modelling.scheduler import NoamOptimizer
 
 from .model import TransformerNet
+import torch.nn.functional as F
 
 _LOSS_FN = torch.nn.modules.loss._Loss  # noqa: SLF001
 
@@ -44,21 +45,26 @@ def train(
     :param tb_writer: Tensorboard writer.
     :return: Trained model.
     """
+    train_losses = []
+    val_losses=[]
+
     for epoch in range(num_epochs):
         logger.info("Starting epoch {}/{}", epoch + 1, num_epochs)
         train_loss = _train_one_epoch(
             model, train_loader, shuffle, vocab, optimizer, loss_fn, epoch, device, tb_writer
         )
+        train_losses.append(train_loss)
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
         val_loss, bleu = _validate_one_epoch(
             model, valid_loader, vocab, loss_fn, epoch, device, tb_writer
         )
+        val_losses.append(val_loss)
         logger.info("End of epoch {}/{}. Validation loss: {}", epoch + 1, num_epochs, val_loss)
         logger.info("End of epoch {}/{}. Validation BLEU: {}", epoch + 1, num_epochs, bleu)
         if isinstance(optimizer, NoamOptimizer):
             logger.info("Learning rate: {}", optimizer.lr)
 
-    return model
+    return model, train_losses, val_losses
 
 
 def _train_one_epoch(
@@ -101,11 +107,17 @@ def _train_one_epoch(
 
         optimizer.zero_grad()
 
+        
         outputs = model(inputs, captions_str)
         captions_end = captions_end.view(-1)
 
         outputs = outputs.view(-1, len(vocab))
-        loss = loss_fn(outputs, captions_end)
+
+        x = captions_end.flatten()
+        one_hot = F.one_hot(x, num_classes=len(vocab)).float()
+
+        loss = loss_fn(outputs, one_hot)
+        #loss = loss_fn(outputs, captions_end)
         loss.backward()
 
         optimizer.step()
@@ -164,7 +176,12 @@ def _validate_one_epoch(
             flatten_outputs = outputs.view(-1, vocab.__len__())
             flatten_captions_end = captions_end.view(-1)
 
-            loss = loss_fn(flatten_outputs, flatten_captions_end)
+            x = flatten_captions_end.flatten()
+            one_hot = F.one_hot(x, num_classes=len(vocab)).float()
+
+            loss = loss_fn(flatten_outputs, one_hot)
+
+            #loss = loss_fn(flatten_outputs, flatten_captions_end)
             running_loss += loss.item()
 
             # Compute BLEU score
