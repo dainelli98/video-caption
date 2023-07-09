@@ -102,10 +102,10 @@ def _train_one_epoch(
         optimizer.zero_grad()
 
         outputs = model(inputs, captions_str)
-        captions_end = captions_end.view(-1)
+        flatten_captions_end = captions_end.view(-1)
 
-        outputs = outputs.view(-1, len(vocab))
-        loss = loss_fn(outputs, captions_end)
+        flatten_outputs = outputs.view(-1, len(vocab))
+        loss = loss_fn(flatten_outputs, flatten_captions_end)
         loss.backward()
 
         optimizer.step()
@@ -113,6 +113,19 @@ def _train_one_epoch(
         running_loss += loss.item()
 
     loss = running_loss / len(training_loader)
+
+    decoded_targets = [_convert_tensor_to_caption(caption, vocab) for caption in captions_end]
+
+    outputs_normalized = torch.argmax(outputs, dim=2)
+
+    decoded_predictions = [
+        _convert_tensor_to_caption(output, vocab) for output in outputs_normalized
+    ]
+
+    example_idx = random.randint(0, len(decoded_predictions) - 1)
+
+    logger.info("Trgt: {}", decoded_targets[example_idx])
+    logger.info("Pred: {}", decoded_predictions[example_idx])
 
     if tb_writer is not None:
         tb_writer.add_scalar("Loss/train", loss, epoch)
