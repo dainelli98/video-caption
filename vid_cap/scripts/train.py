@@ -36,6 +36,7 @@ _MAX_TGT_LEN = 100
     type=click.IntRange(1, 20),
     help="Captions per video used in the dataset.",
 )
+@click.option("--dropout", default=0.1, type=click.FloatRange(0, 1), help="Dropout rate.")
 def main(
     data_dir: Path,
     shuffle: bool,
@@ -46,6 +47,7 @@ def main(
     epochs: int,
     vocab_len: int,
     caps_per_vid: int,
+    dropout: float,
 ) -> None:
     """Train decoder.
 
@@ -60,6 +62,7 @@ def main(
     :param epochs: Number of epochs.
     :param vocab_len: Vocab length.
     :param caps_per_vid: Number of captions per video.
+    :param dropout: Dropout rate.
     """
     gpu_model = "cpu"
 
@@ -105,9 +108,9 @@ def main(
 
     embed_dim = train_dataset.shape[1]
 
-    model = TransformerNet(train_dataset.vocab_len, embed_dim, n_heads, n_layers, _MAX_TGT_LEN).to(
-        device
-    )
+    model = TransformerNet(
+        train_dataset.vocab_len, embed_dim, n_heads, n_layers, _MAX_TGT_LEN, dropout
+    ).to(device)
 
     writer = SummaryWriter()
 
