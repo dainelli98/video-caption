@@ -5,6 +5,7 @@ import platform
 from pathlib import Path
 
 import click
+import joblib
 import torch
 from loguru import logger
 from torch import nn
@@ -32,7 +33,6 @@ _MAX_TGT_LEN = 100
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to train with GPU")
 @click.option("--epochs", default=50, type=click.IntRange(1, 10000), help="Number of epochs.")
 @click.option("--vocab-len", default=8000, type=click.IntRange(1, 100000), help="Vocab length.")
-@click.option("--dropout", default=0.1, type=click.IntRange(0, 1), help="Dropout")
 @click.option(
     "--caps-per-vid",
     default=1,
@@ -104,7 +104,7 @@ def main(
     )
 
     train_loader = DataLoader(
-        train_dataset, batch_size, shuffle, pin_memory=True, num_workers=3, prefetch_factor=True
+        train_dataset, batch_size, shuffle, pin_memory=True, prefetch_factor=True, num_workers=4
     )
 
     valid_loader = DataLoader(valid_dataset, batch_size)
@@ -141,6 +141,8 @@ def main(
         writer,
         loss_smoothing,
     )
+
+    joblib.dump(train_dataset.vocab, data_dir / "output" / f"{model_name}_vocab.pkl")
 
 
 if __name__ == "__main__":

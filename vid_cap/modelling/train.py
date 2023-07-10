@@ -50,7 +50,7 @@ def train(
     :param label_smoothing: Label smoothing. Defaults to ``0.0``.
     :return: Trained model.
     """
-    early_stopper = EarlyStopper(patience=2, min_delta=0)
+    early_stopper = EarlyStopper(patience=5, min_delta=0)
     model_saver = ModelSaver()
 
     for epoch in range(num_epochs):
@@ -68,7 +68,7 @@ def train(
         )
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
         val_loss, bleu = _validate_one_epoch(
-            model, valid_loader, vocab, loss_fn, epoch, device, tb_writer
+            model, valid_loader, vocab, loss_fn, epoch, device, tb_writer, label_smoothing
         )
         logger.info("End of epoch {}/{}. Validation loss: {}", epoch + 1, num_epochs, val_loss)
         logger.info("End of epoch {}/{}. Validation BLEU: {}", epoch + 1, num_epochs, bleu)
@@ -166,6 +166,7 @@ def _validate_one_epoch(
     epoch: int,
     device: torch.device,
     tb_writer: SummaryWriter | None,
+    label_smoothing: float = 0.0,
 ) -> tuple[float, float]:
     """Validate one epoch.
 
@@ -176,6 +177,7 @@ def _validate_one_epoch(
     :param epoch: Epoch number.
     :param device: Device to use.
     :param tb_writer: Tensorboard writer. Defaults to ``None``.
+    :param label_smoothing: Label smoothing. Defaults to ``0.0``.
     :return: Validation loss and accuracy.
     """
     model.eval()
@@ -203,6 +205,8 @@ def _validate_one_epoch(
             flatten_captions_end = captions_end.flatten()
 
             one_hot = F.one_hot(flatten_captions_end, num_classes=len(vocab)).float()
+            if label_smoothing > 0.0:  # ruff: noqa: PLR2004
+                one_hot = _smooth_labels(one_hot, label_smoothing)
 
             loss = loss_fn(flatten_outputs, one_hot)
             running_loss += loss.item()
@@ -276,7 +280,7 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, i
     return " ".join(words)
 
 
-def _smooth_labels(y: torch.Tensor, smooth_factor: torch.Tensor) -> torch.Tensor:
+def _smooth_labels(y: torch.Tensor, smooth_factor: float) -> torch.Tensor:
     """Convert a matrix of one-hot row-vector labels into smoothed versions.
 
     :param y: matrix of one-hot row-vector labels.
