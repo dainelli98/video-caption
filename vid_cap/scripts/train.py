@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# ruff: noqa: PLR0913
 """Script to train decoder."""
 import platform
 from pathlib import Path
@@ -20,6 +21,7 @@ _MAX_TGT_LEN = 100
 
 
 @click.command("train")
+@click.option("--loss-smoothing", default=0.0, type=click.FloatRange(0, 1), help="Loss smoothing.")
 @click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
 @click.option("--shuffle", is_flag=True, default=False, type=bool, help="Shuffle datasets")
 @click.option("--batch-size", default=64, type=click.IntRange(1, 512), help="Batch size.")
@@ -38,6 +40,7 @@ _MAX_TGT_LEN = 100
 )
 @click.option("--dropout", default=0.1, type=click.FloatRange(0, 1), help="Dropout rate.")
 def main(
+    loss_smoothing: float,
     data_dir: Path,
     shuffle: bool,
     batch_size: int,
@@ -53,6 +56,7 @@ def main(
 
     \f
 
+    :param loss_smoothing: Loss smoothing.
     :param data_dir: Path to data directory.
     :param shuffle: Whether to shuffle datasets.
     :param batch_size: Batch size.
@@ -130,6 +134,7 @@ def main(
         epochs,
         device,
         writer,
+        loss_smoothing,
     )
 
     torch.save(model.state_dict(), data_dir / "output" / "model")

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# ruff: noqa: PLR0913
 """Train - decoder."""
 import random
 
@@ -29,6 +30,7 @@ def train(
     num_epochs: int,
     device: torch.device,
     tb_writer: SummaryWriter | None = None,
+    label_smoothing: float = 0.0,
 ) -> TransformerNet:
     """Train model.
 
@@ -42,12 +44,22 @@ def train(
     :param num_epochs: Number of epochs.
     :param device: Device to use.
     :param tb_writer: Tensorboard writer.
+    :param label_smoothing: Label smoothing. Defaults to ``0.0``.
     :return: Trained model.
     """
     for epoch in range(num_epochs):
         logger.info("Starting epoch {}/{}", epoch + 1, num_epochs)
         train_loss = _train_one_epoch(
-            model, train_loader, shuffle, vocab, optimizer, loss_fn, epoch, device, tb_writer
+            model,
+            train_loader,
+            shuffle,
+            vocab,
+            optimizer,
+            loss_fn,
+            epoch,
+            device,
+            tb_writer,
+            label_smoothing,
         )
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
         val_loss, bleu = _validate_one_epoch(
@@ -71,6 +83,7 @@ def _train_one_epoch(
     epoch: int,
     device: torch.device,
     tb_writer: SummaryWriter | None,
+    label_smoothing: float = 0.0,
 ) -> float:
     """Train one epoch.
 
@@ -107,6 +120,8 @@ def _train_one_epoch(
 
         flatten_captions_end = captions_end.flatten()
         one_hot = F.one_hot(flatten_captions_end, num_classes=len(vocab)).float()
+        if label_smoothing > 0.0:  # ruff: noqa: PLR2004
+            one_hot = _smooth_labels(one_hot, label_smoothing)
 
         loss = loss_fn(flatten_outputs, one_hot)
         loss.backward()
@@ -252,3 +267,13 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, i
 
     words = [word for word in words if word not in ["<sos>", "<eos>"]]
     return " ".join(words)
+
+
+def _smooth_labels(y: torch.Tensor, smooth_factor: torch.Tensor) -> torch.Tensor:
+    """Convert a matrix of one-hot row-vector labels into smoothed versions.
+
+    :param y: matrix of one-hot row-vector labels.
+    :param smooth_factor: label smoothing factor (between 0 and 1).
+    :return: A new matrix of smoothed labels.
+    """
+    return y * (1 - smooth_factor) + smooth_factor / y.size(1)
