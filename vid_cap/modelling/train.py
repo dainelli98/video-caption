@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Train - decoder."""
-
 import random
 
 import torch
+import torch.nn.functional as F  # ruff: noqa: N812
 import tqdm
 from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
@@ -102,10 +102,13 @@ def _train_one_epoch(
         optimizer.zero_grad()
 
         outputs = model(inputs, captions_str)
-        flatten_captions_end = captions_end.view(-1)
 
         flatten_outputs = outputs.view(-1, len(vocab))
-        loss = loss_fn(flatten_outputs, flatten_captions_end)
+
+        flatten_captions_end = captions_end.flatten()
+        one_hot = F.one_hot(flatten_captions_end, num_classes=len(vocab)).float()
+
+        loss = loss_fn(flatten_outputs, one_hot)
         loss.backward()
 
         optimizer.step()
@@ -174,10 +177,12 @@ def _validate_one_epoch(
             outputs = model(inputs, captions_str)
 
             # compute loss
-            flatten_outputs = outputs.view(-1, vocab.__len__())
-            flatten_captions_end = captions_end.view(-1)
+            flatten_outputs = outputs.view(-1, len(vocab))
+            flatten_captions_end = captions_end.flatten()
 
-            loss = loss_fn(flatten_outputs, flatten_captions_end)
+            one_hot = F.one_hot(flatten_captions_end, num_classes=len(vocab)).float()
+
+            loss = loss_fn(flatten_outputs, one_hot)
             running_loss += loss.item()
 
             # Compute BLEU score

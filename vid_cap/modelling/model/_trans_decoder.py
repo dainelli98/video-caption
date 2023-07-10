@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Model Builder - decoder."""
+
 import torch
 from loguru import logger
 from torch import nn
@@ -15,10 +16,19 @@ class TransformerNet(nn.Module):
     :param nheads: Number of attention heads.
     :param n_layers: Number of layers.
     :param max_seq_len: Maximum length of sequence.
+    :param dropout: Dropout rate.
+    :param d_ff: Feedforward dimension.
     """
 
     def __init__(
-        self, vocab_size: int, embedding_dim: int, nheads: int, n_layers: int, max_seq_len: int
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        nheads: int,
+        n_layers: int,
+        max_seq_len: int,
+        dropout: float = 0.1,
+        d_ff: int = 2048,
     ) -> None:
         super().__init__()
 
@@ -30,11 +40,16 @@ class TransformerNet(nn.Module):
         self.dec_embedding = nn.Embedding(vocab_size, embedding_dim)
 
         # positional encoding layer
-        self.dec_pe = PositionalEncoding(embedding_dim, max_len=max_seq_len)
+        self.dec_pe = PositionalEncoding(embedding_dim, max_len=max_seq_len, dropout=dropout)
 
         # encoder/decoder layer
         dec_layer = nn.TransformerDecoderLayer(
-            embedding_dim, nheads, activation="gelu", batch_first=True
+            embedding_dim,
+            nheads,
+            activation="gelu",
+            batch_first=True,
+            dropout=dropout,
+            dim_feedforward=d_ff,
         )
         self.decoder = nn.TransformerDecoder(dec_layer, num_layers=n_layers)
 
@@ -43,6 +58,11 @@ class TransformerNet(nn.Module):
 
         # final dense layer
         self.dense = nn.Linear(embedding_dim, vocab_size)
+
+        initrange = 0.1
+        self.dec_embedding.weight.data.uniform_(-initrange, initrange)
+
+        self.embedding_dim = embedding_dim
 
     def _generate_square_subsequent_mask(self, sz: int) -> torch.Tensor:
         """Generate mask for target sequence.

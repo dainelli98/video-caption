@@ -109,13 +109,10 @@ def main(
         device
     )
 
-    if gpu_model == "cuda":
-        model.cuda()
-
     writer = SummaryWriter()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9)
-    optimizer = NoamOptimizer(model.dec_embedding.embedding_dim, 2, 4000, optimizer, writer)
+    optimizer = NoamOptimizer(model.embedding_dim, 2, 4000, optimizer, writer)
 
     criterion = nn.CrossEntropyLoss()
 
