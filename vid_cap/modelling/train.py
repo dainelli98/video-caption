@@ -12,6 +12,9 @@ from torch.utils.tensorboard import SummaryWriter
 from torcheval.metrics import BLEUScore
 
 from vid_cap.modelling.scheduler import NoamOptimizer
+from vid_cap.utils.early_stopper import EarlyStopper
+from vid_cap.utils.model_saver import ModelSaver
+from pathlib import Path
 
 from .model import TransformerNet
 import torch.nn.functional as F
@@ -21,7 +24,6 @@ _LOSS_FN = torch.nn.modules.loss._Loss  # noqa: SLF001
 
 def train(
     model: TransformerNet,
-    shuffle: bool,
     train_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     valid_loader: DataLoader,
     vocab: dict[str, int],
@@ -29,7 +31,9 @@ def train(
     loss_fn: _LOSS_FN,
     num_epochs: int,
     device: torch.device,
-    tb_writer: SummaryWriter | None = None,
+    data_dir: Path,
+    model_name: str,
+    tb_writer: SummaryWriter | None = None
 ) -> TransformerNet:
     """Train model.
 
@@ -48,10 +52,13 @@ def train(
     train_losses = []
     val_losses=[]
 
+    early_stopper = EarlyStopper(patience=2, min_delta=0)
+    model_saver = ModelSaver()
+
     for epoch in range(num_epochs):
         logger.info("Starting epoch {}/{}", epoch + 1, num_epochs)
         train_loss = _train_one_epoch(
-            model, train_loader, shuffle, vocab, optimizer, loss_fn, epoch, device, tb_writer
+            model, train_loader, vocab, optimizer, loss_fn, epoch, device, tb_writer
         )
         train_losses.append(train_loss)
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
@@ -64,13 +71,17 @@ def train(
         if isinstance(optimizer, NoamOptimizer):
             logger.info("Learning rate: {}", optimizer.lr)
 
+        model_saver.save_if_best_model(val_loss, model, data_dir, "{}-last_epoch_{}".format(model_name, epoch + 1))
+            
+        if early_stopper.early_stop(val_loss):
+            return model, train_losses, val_losses
+
     return model, train_losses, val_losses
 
 
 def _train_one_epoch(
     model: TransformerNet,
     training_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
-    shuffle: bool,
     vocab: dict[str, int],
     optimizer: torch.optim.Optimizer | NoamOptimizer,
     loss_fn: _LOSS_FN,
@@ -95,10 +106,6 @@ def _train_one_epoch(
     running_loss = 0.0
     decoded_predictions = []
     decoded_targets = []
-
-    if shuffle:
-        logger.info("Shuffling training data")
-        random.shuffle(training_loader)
 
     for data in tqdm.tqdm(training_loader, f"Train epoch {epoch + 1}"):
         inputs, captions = data
@@ -128,8 +135,8 @@ def _train_one_epoch(
 
         outputs = outputs.view(-1, len(vocab))
 
-        x = captions_end.flatten()
-        one_hot = F.one_hot(x, num_classes=len(vocab)).float()
+        flatten_captions_end = captions_end.flatten()
+        one_hot = F.one_hot(flatten_captions_end, num_classes=len(vocab)).float()
 
         loss = loss_fn(outputs, one_hot)
         #loss = loss_fn(outputs, captions_end)
@@ -269,5 +276,5 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, i
         word = next((key for key, val in vocab.items() if val == idx), "<unk>")
         words.append(word)
 
-    words = [word for word in words if word not in ["<sos>", "<eos>"]]
+    words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
     return " ".join(words)

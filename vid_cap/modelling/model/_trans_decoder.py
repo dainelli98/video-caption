@@ -28,25 +28,21 @@ class TransformerNet(nn.Module):
 
         # embedding layer
         self.dec_embedding = nn.Embedding(vocab_size, embedding_dim)
-        self.dropout_embedding = nn.Dropout(p=dropout)
 
         # positional encoding layer
         self.dec_pe = PositionalEncoding(embedding_dim, max_len=max_seq_len)
-        self.dropout_pe = nn.Dropout(p=dropout)
 
         # encoder/decoder layer
         dec_layer = nn.TransformerDecoderLayer(
             embedding_dim, nheads, activation="gelu", batch_first=True
         )
         self.decoder = nn.TransformerDecoder(dec_layer, num_layers=n_layers)
-        self.dropout_decoder = nn.Dropout(p=dropout)
         
         # target sequence mask
         self.tgt_mask = None
 
         # final dense layer
         self.dense = nn.Linear(embedding_dim, vocab_size)
-        self.dropout_final = nn.Dropout(p=dropout)
 
     def _generate_square_subsequent_mask(self, sz: int) -> torch.Tensor:
         """Generate mask for target sequence.
@@ -74,8 +70,5 @@ class TransformerNet(nn.Module):
 
         transformer_out = self.decoder(tgt=tgt, memory=src, tgt_mask=self.tgt_mask)
         transformer_out = self.dense(transformer_out)
-
-        if self.training:
-            transformer_out = self.dropout_final(transformer_out)
 
         return transformer_out

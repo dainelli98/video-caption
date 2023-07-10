@@ -30,6 +30,7 @@ _MAX_TGT_LEN = 100
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to train with GPU")
 @click.option("--epochs", default=50, type=click.IntRange(1, 10000), help="Number of epochs.")
 @click.option("--vocab-len", default=8000, type=click.IntRange(1, 100000), help="Vocab length.")
+@click.option("--dropout", default=0.1, type=click.IntRange(0, 1), help="Dropout")
 @click.option(
     "--caps-per-vid",
     default=1,
@@ -46,6 +47,7 @@ def main(
     epochs: int,
     vocab_len: int,
     caps_per_vid: int,
+    dropout: int,
 ) -> None:
     """Train decoder.
 
@@ -98,14 +100,12 @@ def main(
     train_loader = DataLoader(
         train_dataset, batch_size, False, pin_memory=True, num_workers=3, prefetch_factor=True
     )
-    if shuffle:
-        train_loader = list(train_loader)
 
-    valid_loader = DataLoader(valid_dataset, batch_size, shuffle=False)
+    valid_loader = DataLoader(valid_dataset, batch_size, shuffle=shuffle)
 
     embed_dim = train_dataset.shape[1]
 
-    model = TransformerNet(train_dataset.vocab_len, embed_dim, n_heads, n_layers, _MAX_TGT_LEN, 0.2).to(
+    model = TransformerNet(train_dataset.vocab_len, embed_dim, n_heads, n_layers, _MAX_TGT_LEN, dropout).to(
         device
     )
 
@@ -116,9 +116,10 @@ def main(
 
     criterion = nn.CrossEntropyLoss()
 
+    model_name = "MODEL-batch_size_{}-n_heads_{}-n_layers_{}-epochs_{}-vocab_len_{}-caps_per_vid_{}".format( batch_size, n_heads, n_layers, epochs, vocab_len, caps_per_vid)
+
     model, train_losses, val_losses = train.train(
         model,
-        shuffle,
         train_loader,
         valid_loader,
         train_dataset.vocab,
@@ -126,10 +127,11 @@ def main(
         criterion,
         epochs,
         device,
-        writer,
+        data_dir,
+        model_name,
+        writer
     )
 
-    torch.save(model.state_dict(), data_dir / "output" / "model")
     print(train_losses)
     print(val_losses)
 
