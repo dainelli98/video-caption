@@ -7,7 +7,8 @@ class EarlyStopper:
     """Early stopper for training loop.
 
     :param patience: Number of epochs to wait for improvement. Defaults to ``1``.
-    :param min_delta: Minimum change in the monitored quantity to qualify as an improvement. Defaults to ``0``.
+    :param min_delta: Minimum change in the monitored quantity to qualify as an improvement.
+        Defaults to ``0``.
     """
 
     _patience: int
@@ -15,7 +16,7 @@ class EarlyStopper:
     _counter: int
     _min_validation_loss: float
 
-    def __init__(self, patience=1, min_delta=0) -> None:
+    def __init__(self, patience: int = 1, min_delta: float = 0) -> None:
         self._patience = patience
         self._min_delta = min_delta
         self._counter = 0

@@ -122,7 +122,10 @@ def main(
 
     criterion = nn.CrossEntropyLoss()
 
-    model_name = f"MODEL-batch_size_{batch_size}-n_heads_{n_heads}-n_layers_{n_layers}-vocab_len_{vocab_len}-caps_per_vid_{caps_per_vid}"
+    model_name = (
+        f"MODEL-batch_size_{batch_size}-n_heads_{n_heads}-n_layers_"
+        f"{n_layers}-vocab_len_{vocab_len}-caps_per_vid_{caps_per_vid}"
+    )
 
     model = train.train(
         model,
