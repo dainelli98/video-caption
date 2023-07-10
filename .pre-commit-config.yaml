@@ -14,11 +14,6 @@ repos:
     - id: mixed-line-ending
       stages: [commit, merge-commit]
       args: ['--fix=lf']
-    - id: check-json
-      stages: [commit, merge-commit]
-    - id: pretty-format-json
-      stages: [commit, merge-commit]
-      args: ['--autofix']
 
 - repo: https://github.com/kynan/nbstripout
   rev: 0.6.1

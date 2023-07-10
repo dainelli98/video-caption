@@ -2,6 +2,7 @@
 # ruff: noqa: PLR0913
 """Train - decoder."""
 import random
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F  # ruff: noqa: N812
@@ -13,6 +14,8 @@ from torch.utils.tensorboard import SummaryWriter
 from torcheval.metrics import BLEUScore
 
 from vid_cap.modelling.scheduler import NoamOptimizer
+from vid_cap.utils.early_stopper import EarlyStopper
+from vid_cap.utils.model_saver import ModelSaver
 
 from .model import TransformerNet
 
@@ -21,7 +24,6 @@ _LOSS_FN = torch.nn.modules.loss._Loss  # noqa: SLF001
 
 def train(
     model: TransformerNet,
-    shuffle: bool,
     train_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     valid_loader: DataLoader,
     vocab: dict[str, int],
@@ -29,13 +31,14 @@ def train(
     loss_fn: _LOSS_FN,
     num_epochs: int,
     device: torch.device,
+    data_dir: Path,
+    model_name: str,
     tb_writer: SummaryWriter | None = None,
     label_smoothing: float = 0.0,
 ) -> TransformerNet:
     """Train model.
 
     :param model: Model to train.
-    :param shuffle: Whether to shuffle train dataset at each epoch.
     :param train_loader: Training data loader.
     :param valid_loader: Validation data loader.
     :param vocab: Vocabulary.
@@ -47,12 +50,14 @@ def train(
     :param label_smoothing: Label smoothing. Defaults to ``0.0``.
     :return: Trained model.
     """
+    early_stopper = EarlyStopper(patience=2, min_delta=0)
+    model_saver = ModelSaver()
+
     for epoch in range(num_epochs):
         logger.info("Starting epoch {}/{}", epoch + 1, num_epochs)
         train_loss = _train_one_epoch(
             model,
             train_loader,
-            shuffle,
             vocab,
             optimizer,
             loss_fn,
@@ -70,13 +75,19 @@ def train(
         if isinstance(optimizer, NoamOptimizer):
             logger.info("Learning rate: {}", optimizer.lr)
 
+        model_saver.save_if_best_model(
+            val_loss, model, data_dir, f"{model_name}-last_epoch_{epoch + 1}"
+        )
+
+        if early_stopper.early_stop(val_loss):
+            return model
+
     return model
 
 
 def _train_one_epoch(
     model: TransformerNet,
     training_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
-    shuffle: bool,
     vocab: dict[str, int],
     optimizer: torch.optim.Optimizer | NoamOptimizer,
     loss_fn: _LOSS_FN,
@@ -89,7 +100,6 @@ def _train_one_epoch(
 
     :param model: Model to train.
     :param training_loader: Training data loader.
-    :param shuffle: Whether to shuffle train dataset batches at each epoch.
     :param vocab: Vocabulary.
     :param optimizer: Optimizer.
     :param loss_fn: Loss function.
@@ -100,9 +110,6 @@ def _train_one_epoch(
     """
     model.train()
     running_loss = 0.0
-    if shuffle:
-        logger.info("Shuffling training data")
-        random.shuffle(training_loader)
 
     for data in tqdm.tqdm(training_loader, f"Train epoch {epoch + 1}"):
         inputs, captions = data
@@ -265,7 +272,7 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, i
         word = next((key for key, val in vocab.items() if val == idx), "<unk>")
         words.append(word)
 
-    words = [word for word in words if word not in ["<sos>", "<eos>"]]
+    words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
     return " ".join(words)
 
 

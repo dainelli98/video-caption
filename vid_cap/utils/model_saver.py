@@ -1,0 +1,22 @@
+# -*- coding: utf-8 -*-
+"""Model saver for training loop."""
+from pathlib import Path
+
+import numpy as np
+import torch
+
+
+class ModelSaver:
+    """Model saver for training loop."""
+
+    _min_validation_loss: float
+
+    def __init__(self) -> None:
+        self._min_validation_loss = np.inf
+
+    def save_if_best_model(
+        self, validation_loss: float, model: torch.nn.Module, data_dir: Path, model_name: str
+    ):
+        if validation_loss < self._min_validation_loss:
+            self._min_validation_loss = validation_loss
+            torch.save(model.state_dict(), data_dir / "output" / model_name)
