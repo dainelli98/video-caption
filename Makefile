@@ -151,3 +151,6 @@ format: ## Apply formatters
 	black -l 100 .
 	ruff -s --fix --exit-zero .
 	docformatter -r -i --wrap-summaries 100 --wrap-descriptions 90 .
+
+model-test:
+	python -m vid_cap test --use-gpu --model-path=$(model_path) --vocab-path=$(vocab_path) --n-heads=$(n_heads) --n-layers=$(n_layers)
