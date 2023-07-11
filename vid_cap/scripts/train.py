@@ -144,8 +144,8 @@ def main(
     )
 
     joblib.dump(train_dataset.vocab, data_dir / "output" / f"{model_name}_vocab.pkl")
-    plot_traing_losses(train_loss=train_loss, val_loss=val_loss)
-    plot_bleu_scores(bleu_scores)
+    plot_traing_losses(train_loss=train_loss, val_loss=val_loss,file_suffix=model_name)
+    plot_bleu_scores(bleu_scores, file_suffix=model_name)
     
 if __name__ == "__main__":
     main.main(standalone_mode=False)
