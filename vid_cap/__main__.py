@@ -13,7 +13,7 @@ def _main() -> None:
     @click.version_option(__version__)
     def entry_point() -> None:
         """Package entry points."""
-        for command in (scripts.train, scripts.prepare_dataset):
+        for command in (scripts.train, scripts.prepare_dataset, scripts.test):
             entry_point.add_command(command)
 
     entry_point.main(standalone_mode=False)
