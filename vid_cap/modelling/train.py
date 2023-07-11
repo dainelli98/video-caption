@@ -90,7 +90,7 @@ def train(
         )
 
         if early_stopper.early_stop(val_loss):
-            return model
+            return model,train_losses, val_losses, bleu_scores
 
     return model, train_losses, val_losses, bleu_scores
 
