@@ -125,7 +125,7 @@ def main(
 
     model_name = (
         f"MODEL-batch_size_{batch_size}-n_heads_{n_heads}-n_layers_"
-        f"{n_layers}-vocab_len_{vocab_len}-caps_per_vid_{caps_per_vid}"
+        f"{n_layers}-vocab_len_{vocab_len}-caps_per_vid_{caps_per_vid}_embeddings_{train_dataset.shape[0]}"
     )
 
     model, train_loss, val_loss, bleu_scores = train.train(
