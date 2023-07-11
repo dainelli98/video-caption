@@ -35,7 +35,7 @@ def train(
     model_name: str,
     tb_writer: SummaryWriter | None = None,
     label_smoothing: float = 0.0,
-) -> TransformerNet:
+) -> tuple[TransformerNet, list[float], list[float], list[float]]:
     """Train model.
 
     :param model: Model to train.
@@ -48,7 +48,7 @@ def train(
     :param device: Device to use.
     :param tb_writer: Tensorboard writer.
     :param label_smoothing: Label smoothing. Defaults to ``0.0``.
-    :return: Trained model.
+    :return: Trained model and metrics.
     """
     early_stopper = EarlyStopper(patience=5, min_delta=0)
     model_saver = ModelSaver()
@@ -90,7 +90,7 @@ def train(
         )
 
         if early_stopper.early_stop(val_loss):
-            return model,train_losses, val_losses, bleu_scores
+            return model, train_losses, val_losses, bleu_scores
 
     return model, train_losses, val_losses, bleu_scores
 
