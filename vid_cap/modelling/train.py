@@ -27,14 +27,14 @@ def train(
     train_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     valid_loader: DataLoader,
     vocab: dict[str, int],
-    optimizer: torch.optim.Optimizer | NoamOptimizer,
+    optimizer: NoamOptimizer,
     loss_fn: _LOSS_FN,
     num_epochs: int,
     device: torch.device,
     output_dir: Path,
     tb_writer: SummaryWriter | None = None,
     label_smoothing: float = 0.0,
-) -> tuple[TransformerNet, list[float], list[float], list[float]]:
+) -> tuple[TransformerNet, list[float], list[float], list[float], list[float]]:
     """Train model.
 
     :param model: Model to train.
@@ -82,22 +82,21 @@ def train(
 
         logger.info("End of epoch {}/{}. Validation loss: {}", epoch + 1, num_epochs, val_loss)
         logger.info("End of epoch {}/{}. Validation BLEU: {}", epoch + 1, num_epochs, bleu)
-        if isinstance(optimizer, NoamOptimizer):
-            logger.info("Learning rate: {}", optimizer.lr)
+        logger.info("Learning rate: {}", optimizer.lr)
 
         model_saver.save_if_best_model(val_loss, model, output_dir, "model")
 
         if early_stopper.early_stop(val_loss):
-            return model, train_losses, val_losses, bleu_scores
+            return model, train_losses, val_losses, bleu_scores, optimizer.lrs
 
-    return model, train_losses, val_losses, bleu_scores
+    return model, train_losses, val_losses, bleu_scores, optimizer.lrs
 
 
 def _train_one_epoch(
     model: TransformerNet,
     training_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     vocab: dict[str, int],
-    optimizer: torch.optim.Optimizer | NoamOptimizer,
+    optimizer: NoamOptimizer,
     loss_fn: _LOSS_FN,
     epoch: int,
     device: torch.device,

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 # ruff: noqa: PLR0913
-"""Script to train decoder."""
+"""Script to do experiment."""
 import platform
 from pathlib import Path
 
 import click
 import joblib
+import numpy as np
 import pandas as pd
 import torch
 from loguru import logger
@@ -15,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from vid_cap import DATA_DIR
 from vid_cap.dataset import VideoFeatDataset
-from vid_cap.modelling import train
+from vid_cap.modelling import test, train
 from vid_cap.modelling.model import TransformerNet
 from vid_cap.modelling.scheduler import NoamOptimizer
 from vid_cap.utils import loss_plot
@@ -23,7 +24,7 @@ from vid_cap.utils import loss_plot
 _MAX_TGT_LEN = 100
 
 
-@click.command("train")
+@click.command("experiment")
 @click.option("--warmup-steps", default=4000, type=click.IntRange(1, 100000), help="Warmup steps.")
 @click.option("--loss-smoothing", default=0.1, type=click.FloatRange(0, 1), help="Loss smoothing.")
 @click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
@@ -57,7 +58,7 @@ def main(
     caps_per_vid: int,
     dropout: float,
 ) -> None:
-    """Train decoder.
+    """Perform experiement.
 
     \f
 
@@ -74,6 +75,8 @@ def main(
     :param caps_per_vid: Number of captions per video.
     :param dropout: Dropout rate.
     """
+    exp_time = pd.Timestamp.now()
+
     gpu_model = "cpu"
 
     if use_gpu:
@@ -84,7 +87,7 @@ def main(
 
     device = torch.device(gpu_model)
 
-    logger.info(f"Training with device : {device}")
+    logger.info(f"Using device : {device}")
 
     train_dataset = VideoFeatDataset(
         data_dir / "train" / "videos",
@@ -92,8 +95,15 @@ def main(
         caps_per_vid,
         vocab_len,
     )
+
+    vocab_len = train_dataset.vocab_len
+
     valid_dataset = VideoFeatDataset(
         data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", caps_per_vid
+    )
+
+    test_dataset = VideoFeatDataset(
+        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", caps_per_vid
     )
 
     hparams = {
@@ -116,6 +126,8 @@ def main(
     )
 
     valid_loader = DataLoader(valid_dataset, batch_size)
+
+    test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
 
     embed_dim = train_dataset.shape[1]
 
@@ -143,7 +155,7 @@ def main(
         / f"warmup_steps_{warmup_steps}"
         / f"loss_smoothing_{loss_smoothing}"
         / f"shuffle_{shuffle}"
-        / f"{pd.Timestamp.now().strftime('%Y%m%d%H%M%S')}"
+        / exp_time.strftime("%Y%m%d%H%M%S")
     )
 
     model, train_loss, val_loss, bleu_scores, lrs = train.train(
@@ -163,6 +175,46 @@ def main(
     joblib.dump(train_dataset.vocab, out_dir / "vocab.pkl")
 
     loss_plot.plot_and_store_graphs(train_loss, val_loss, bleu_scores, lrs, out_dir)
+
+    best_epoch_idx = np.argmin(val_loss)
+
+    best_bleu_score = bleu_scores[best_epoch_idx]
+    best_train_loss = train_loss[best_epoch_idx]
+    best_val_loss = val_loss[best_epoch_idx]
+
+    model.load_state_dict(torch.load(out_dir / "model", map_location=device))
+
+    bleu_score = test.test_model(model, test_loader, train_dataset.vocab, device)
+
+    logger.info(f"Test BLEU score : {bleu_score}")
+
+    metrics_file = out_dir / "metrics.csv"
+
+    metrics = pd.DataFrame(
+        hparams
+        | {
+            "val_bleu_score": float(best_bleu_score),
+            "train_loss": best_train_loss,
+            "val_loss": best_val_loss,
+            "test_bleu_score": float(bleu_score),
+            "timestamp": exp_time,
+        },
+        index=[0],
+    )
+
+    metrics.to_csv(metrics_file, index=False)
+
+    experiments_file = data_dir / "output" / "experiments.csv"
+
+    experiments = (
+        pd.read_csv(experiments_file, index_col=False)
+        if experiments_file.exists()
+        else pd.DataFrame()
+    )
+
+    experiments = pd.concat((experiments, metrics))
+
+    experiments.to_csv(experiments_file, index=False)
 
 
 if __name__ == "__main__":
