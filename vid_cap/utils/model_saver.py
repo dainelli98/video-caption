@@ -26,4 +26,5 @@ class ModelSaver:
         """
         if validation_loss < self._min_validation_loss:
             self._min_validation_loss = validation_loss
-            torch.save(model.state_dict(), data_dir / "output" / model_name)
+            data_dir.mkdir(parents=True, exist_ok=True)
+            torch.save(model.state_dict(), data_dir / model_name)

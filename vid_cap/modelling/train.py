@@ -31,8 +31,7 @@ def train(
     loss_fn: _LOSS_FN,
     num_epochs: int,
     device: torch.device,
-    data_dir: Path,
-    model_name: str,
+    output_dir: Path,
     tb_writer: SummaryWriter | None = None,
     label_smoothing: float = 0.0,
 ) -> tuple[TransformerNet, list[float], list[float], list[float]]:
@@ -46,6 +45,7 @@ def train(
     :param loss_fn: Loss function.
     :param num_epochs: Number of epochs.
     :param device: Device to use.
+    :param output_dir: Output directory.
     :param tb_writer: Tensorboard writer.
     :param label_smoothing: Label smoothing. Defaults to ``0.0``.
     :return: Trained model and metrics.
@@ -85,9 +85,7 @@ def train(
         if isinstance(optimizer, NoamOptimizer):
             logger.info("Learning rate: {}", optimizer.lr)
 
-        model_saver.save_if_best_model(
-            val_loss, model, data_dir, f"{model_name}-last_epoch_{epoch + 1}"
-        )
+        model_saver.save_if_best_model(val_loss, model, output_dir, f"model-last_epoch_{epoch + 1}")
 
         if early_stopper.early_stop(val_loss):
             return model, train_losses, val_losses, bleu_scores

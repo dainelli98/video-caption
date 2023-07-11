@@ -17,7 +17,7 @@ from vid_cap.dataset import VideoFeatDataset
 from vid_cap.modelling import train
 from vid_cap.modelling.model import TransformerNet
 from vid_cap.modelling.scheduler import NoamOptimizer
-from vid_cap.utils.loss_plot import plot_bleu_scores, plot_traing_losses
+from vid_cap.utils import loss_plot
 
 _MAX_TGT_LEN = 100
 
@@ -123,10 +123,14 @@ def main(
 
     criterion = nn.CrossEntropyLoss()
 
-    model_name = (
-        f"MODEL-batch_size_{batch_size}-n_heads_{n_heads}-n_layers_"
-        f"{n_layers}-vocab_len_{vocab_len}-caps_per_vid_{caps_per_vid}"
-        f"_embeddings_{train_dataset.shape[0]}"
+    out_dir = (
+        data_dir
+        / "output"
+        / (
+            f"batch_size_{batch_size}-n_heads_{n_heads}-n_layers_"
+            f"{n_layers}-vocab_len_{vocab_len}-caps_per_vid_{caps_per_vid}"
+            f"_embeddings_{train_dataset.shape[0]}"
+        )
     )
 
     model, train_loss, val_loss, bleu_scores = train.train(
@@ -138,15 +142,14 @@ def main(
         criterion,
         epochs,
         device,
-        data_dir,
-        model_name,
+        out_dir,
         writer,
         loss_smoothing,
     )
 
-    joblib.dump(train_dataset.vocab, data_dir / "output" / f"{model_name}_vocab.pkl")
-    plot_traing_losses(train_loss=train_loss, val_loss=val_loss)
-    plot_bleu_scores(bleu_scores)
+    joblib.dump(train_dataset.vocab, out_dir / "vocab.pkl")
+
+    loss_plot.plot_and_store_graphs(train_loss, val_loss, bleu_scores, out_dir)
 
 
 if __name__ == "__main__":
