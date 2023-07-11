@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
+from datetime import datetime
 
-def plot_traing_losses(train_loss, val_loss):
+def plot_traing_losses(train_loss, val_loss, file_suffix):
 
     # Create a list for the number of epochs
     epochs = range(1, len(train_loss) + 1)
@@ -18,12 +19,12 @@ def plot_traing_losses(train_loss, val_loss):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
+    
+    now = datetime.now()
+    plt.savefig(f'{now.strftime("%d%m%Y%H%M%S")}-{file_suffix}-LOSS.png')
 
-    # Show the plot
-    plt.show()
 
-
-def plot_bleu_scores(scores):
+def plot_bleu_scores(scores, file_suffix):
      # Create a list for the number of epochs
     epochs = range(1, len(scores) + 1)
 
@@ -38,5 +39,5 @@ def plot_bleu_scores(scores):
     plt.ylabel('Bleu score')
     plt.legend()
 
-    # Show the plot
-    plt.show()
+    now = datetime.now()
+    plt.savefig(f'{now.strftime("%d%m%Y%H%M%S")}-{file_suffix}-BLEU.png')
