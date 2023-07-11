@@ -19,33 +19,34 @@ IMG_PROCESSOR: Callable = AutoImageProcessor.from_pretrained(_IMG_PROCESSOR_NAME
 ENCODER: VideoMAEModel = _ENC_MODEL.videomae
 
 
-def gen_feat_vecs(
-    filepaths: Path | str | Iterable[Path | str],
-    n_frames: int,
-    img_processor: Callable = IMG_PROCESSOR,
-    encoder: VideoMAEModel = ENCODER,
-) -> np.ndarray:
+__all__: list[str] = ["gen_feat_vecs", "get_video_frames", "ENCODER", "IMG_PROCESSOR"]
+
+
+def gen_feat_vecs(filepaths: Path | str | Iterable[Path | str], n_frames: int) -> np.ndarray:
     """Generate feature vectors from a video files.
 
     :param filepaths: Paths to the video files.
     :param n_frames: Number of frames to sample from the videos.
-    :param img_processor: Image processor used to prepare de videos. Defaults to ``IMG_PROCESSOR``.
-    :param encoder: Encoder used to generate feature vectors. Defaults to ``ENCODER``.
     :return: Feature vector for videos.
     """
     if not isinstance(filepaths, list | tuple | set | np.ndarray):
         filepaths = [filepaths]
 
     videos = [
-        img_processor(list(get_video_frames(filepath, n_frames)), return_tensors="pt")
+        IMG_PROCESSOR(list(get_video_frames(filepath, n_frames)), return_tensors="pt")
         for filepath in filepaths
     ]
 
     with torch.no_grad():
-        return np.array([encoder(**video)[0][0].numpy() for video in videos])
+        return np.array([ENCODER(**video)[0][0].numpy() for video in videos])
 
 
 def get_video_frames(filepath: Path | str, n_frames: int) -> np.ndarray:
+    """Get evenly distributed frames from a video.
+
+    :param filepath: Path to the video file.
+    :param n_frames: Number of frames to sample from the video.
+    """
     container = av.open(str(filepath.absolute()))
     indices = _sample_frame_indices(n_frames, seg_len=container.streams.video[0].frames)
     return _read_video_pyav(container, indices)

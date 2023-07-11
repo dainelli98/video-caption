@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Train",
+            "type": "shell",
+            "command": "vid-cap",
+            "args": [
+                "train",
+                "--use-gpu"
+            ],
+        },
+        {
+            "label": "Prepare dataset",
+            "type": "shell",
+            "command": "vid-cap",
+            "args": [
+                "prepare-dataset"
+            ],
+        }
+    ]
+}

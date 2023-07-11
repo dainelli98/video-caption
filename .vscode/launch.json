@@ -1,0 +1,33 @@
+{
+  "configurations": [
+    {
+      "args": [
+        "train",
+        "--use-gpu",
+        "--caps-per-vid",
+        "5",
+        "--n-layers",
+        "6",
+        "--shuffle",
+        "--vocab-len",
+        "4000"
+      ],
+      "justMyCode": true,
+      "module": "vid_cap.__main__",
+      "name": "Train",
+      "request": "launch",
+      "type": "python"
+    },
+    {
+      "args": [
+        "prepare-dataset"
+      ],
+      "justMyCode": true,
+      "module": "vid_cap.__main__",
+      "name": "Prepare dataset",
+      "request": "launch",
+      "type": "python"
+    }
+  ],
+  "version": "0.2.0"
+}
