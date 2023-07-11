@@ -132,3 +132,4 @@ data/*
 
 runs/*
 models/
+.DS_Store
