@@ -50,7 +50,7 @@ def train(
     :param label_smoothing: Label smoothing. Defaults to ``0.0``.
     :return: Trained model and metrics.
     """
-    early_stopper = EarlyStopper(patience=5, min_delta=0)
+    early_stopper = EarlyStopper(patience=2, min_delta=0)
     model_saver = ModelSaver()
 
     train_losses = []
@@ -85,7 +85,7 @@ def train(
         if isinstance(optimizer, NoamOptimizer):
             logger.info("Learning rate: {}", optimizer.lr)
 
-        model_saver.save_if_best_model(val_loss, model, output_dir, f"model-last_epoch_{epoch + 1}")
+        model_saver.save_if_best_model(val_loss, model, output_dir, "model")
 
         if early_stopper.early_stop(val_loss):
             return model, train_losses, val_losses, bleu_scores

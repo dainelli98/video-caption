@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 import joblib
+import pandas as pd
 import torch
 from loguru import logger
 from torch import nn
@@ -126,11 +127,15 @@ def main(
     out_dir = (
         data_dir
         / "output"
-        / (
-            f"batch_size_{batch_size}-n_heads_{n_heads}-n_layers_"
-            f"{n_layers}-vocab_len_{vocab_len}-caps_per_vid_{caps_per_vid}"
-            f"_embeddings_{train_dataset.shape[0]}"
-        )
+        / f"embeddings_{train_dataset.shape[0]}"
+        / f"batch_size_{batch_size}"
+        / f"n_heads_{n_heads}"
+        / f"n_layers_{n_layers}"
+        / f"vocab_len_{vocab_len}"
+        / f"caps_per_vid_{caps_per_vid}"
+        / f"dropout_{dropout}"
+        / f"loss_smoothing_{loss_smoothing}"
+        / f"{pd.Timestamp.now().strftime('%Y%m%d%H%M%S')}"
     )
 
     model, train_loss, val_loss, bleu_scores = train.train(
