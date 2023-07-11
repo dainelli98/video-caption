@@ -53,6 +53,10 @@ def train(
     early_stopper = EarlyStopper(patience=5, min_delta=0)
     model_saver = ModelSaver()
 
+    train_losses = []
+    val_losses = []
+    bleu_scores = []
+
     for epoch in range(num_epochs):
         logger.info("Starting epoch {}/{}", epoch + 1, num_epochs)
         train_loss = _train_one_epoch(
@@ -66,10 +70,16 @@ def train(
             tb_writer,
             label_smoothing,
         )
+        train_losses.append(train_loss)
+
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
         val_loss, bleu = _validate_one_epoch(
             model, valid_loader, vocab, loss_fn, epoch, device, tb_writer, label_smoothing
         )
+
+        val_losses.append(val_loss)
+        bleu_scores.append(bleu)
+
         logger.info("End of epoch {}/{}. Validation loss: {}", epoch + 1, num_epochs, val_loss)
         logger.info("End of epoch {}/{}. Validation BLEU: {}", epoch + 1, num_epochs, bleu)
         if isinstance(optimizer, NoamOptimizer):
@@ -82,7 +92,7 @@ def train(
         if early_stopper.early_stop(val_loss):
             return model
 
-    return model
+    return model, train_losses, val_losses, bleu_scores
 
 
 def _train_one_epoch(

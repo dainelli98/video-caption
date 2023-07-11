@@ -17,6 +17,7 @@ from vid_cap.dataset import VideoFeatDataset
 from vid_cap.modelling import train
 from vid_cap.modelling.model import TransformerNet
 from vid_cap.modelling.scheduler import NoamOptimizer
+from vid_cap.utils.loss_plot import plot_traing_losses, plot_bleu_scores
 
 _MAX_TGT_LEN = 100
 
@@ -127,7 +128,7 @@ def main(
         f"{n_layers}-vocab_len_{vocab_len}-caps_per_vid_{caps_per_vid}"
     )
 
-    model = train.train(
+    model, train_loss, val_loss, bleu_scores = train.train(
         model,
         train_loader,
         valid_loader,
@@ -143,7 +144,8 @@ def main(
     )
 
     joblib.dump(train_dataset.vocab, data_dir / "output" / f"{model_name}_vocab.pkl")
-
-
+    plot_traing_losses(train_loss=train_loss, val_loss=val_loss)
+    plot_bleu_scores(bleu_scores)
+    
 if __name__ == "__main__":
     main.main(standalone_mode=False)
