@@ -105,5 +105,5 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, i
         word = next((key for key, val in vocab.items() if val == idx), "<unk>")
         words.append(word)
 
-    words = [word for word in words if word not in ["<sos>", "<eos>"]]
+    words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
     return " ".join(words)
