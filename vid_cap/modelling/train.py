@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # ruff: noqa: PLR0913
 """Train - decoder."""
-import random
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn.functional as F  # ruff: noqa: N812
 import tqdm
@@ -154,10 +154,9 @@ def _train_one_epoch(
         _convert_tensor_to_caption(output, vocab) for output in outputs_normalized
     ]
 
-    example_idx = random.randint(0, len(decoded_predictions) - 1)
-
-    logger.info("Trgt: {}", decoded_targets[example_idx])
-    logger.info("Pred: {}", decoded_predictions[example_idx])
+    for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
+        logger.info("Trgt: {}", decoded_targets[example_idx])
+        logger.info("Pred: {}", decoded_predictions[example_idx])
 
     if tb_writer is not None:
         tb_writer.add_scalar("Loss/train", loss, epoch)
@@ -242,10 +241,9 @@ def _validate_one_epoch(
         tb_writer.add_scalar("Loss/validation", avg_loss, epoch)
         tb_writer.add_scalar("BLEU/validation", avg_bleu_metric, epoch)
 
-    example_idx = random.randint(0, len(decoded_predictions) - 1)
-
-    logger.info("Trgt: {}", decoded_targets[example_idx])
-    logger.info("Pred: {}", decoded_predictions[example_idx])
+    for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
+        logger.info("Trgt: {}", decoded_targets[example_idx])
+        logger.info("Pred: {}", decoded_predictions[example_idx])
 
     return avg_loss, avg_bleu_metric
 

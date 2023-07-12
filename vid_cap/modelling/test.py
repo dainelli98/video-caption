@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """Function to test models."""
 
-import random
-
+import numpy as np
 import torch
 import tqdm
 from loguru import logger
@@ -64,10 +63,9 @@ def test_model(
     avg_bleu_metric = torch.mean(torch.stack(bleu_scores))
     logger.info("Test BLEU score: {}", avg_bleu_metric)
 
-    example_idx = random.randint(0, len(decoded_predictions) - 1)
-
-    logger.info("Trgt: {}", decoded_targets[example_idx])
-    logger.info("Pred: {}", decoded_predictions[example_idx])
+    for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
+        logger.info("Trgt: {}", decoded_targets[example_idx])
+        logger.info("Pred: {}", decoded_predictions[example_idx])
 
     return avg_bleu_metric
 
