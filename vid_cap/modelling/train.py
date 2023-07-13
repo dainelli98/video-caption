@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # ruff: noqa: PLR0913
 """Train - decoder."""
-import random
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn.functional as F  # ruff: noqa: N812
 import tqdm
@@ -27,15 +27,14 @@ def train(
     train_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     valid_loader: DataLoader,
     vocab: dict[str, int],
-    optimizer: torch.optim.Optimizer | NoamOptimizer,
+    optimizer: NoamOptimizer,
     loss_fn: _LOSS_FN,
     num_epochs: int,
     device: torch.device,
-    data_dir: Path,
-    model_name: str,
+    output_dir: Path,
     tb_writer: SummaryWriter | None = None,
     label_smoothing: float = 0.0,
-) -> TransformerNet:
+) -> tuple[TransformerNet, list[float], list[float], list[float], list[float]]:
     """Train model.
 
     :param model: Model to train.
@@ -46,11 +45,12 @@ def train(
     :param loss_fn: Loss function.
     :param num_epochs: Number of epochs.
     :param device: Device to use.
+    :param output_dir: Output directory.
     :param tb_writer: Tensorboard writer.
     :param label_smoothing: Label smoothing. Defaults to ``0.0``.
-    :return: Trained model.
+    :return: Trained model and metrics.
     """
-    early_stopper = EarlyStopper(patience=5, min_delta=0)
+    early_stopper = EarlyStopper(patience=2, min_delta=0)
     model_saver = ModelSaver()
 
     train_losses = []
@@ -82,24 +82,21 @@ def train(
 
         logger.info("End of epoch {}/{}. Validation loss: {}", epoch + 1, num_epochs, val_loss)
         logger.info("End of epoch {}/{}. Validation BLEU: {}", epoch + 1, num_epochs, bleu)
-        if isinstance(optimizer, NoamOptimizer):
-            logger.info("Learning rate: {}", optimizer.lr)
+        logger.info("Learning rate: {}", optimizer.lr)
 
-        model_saver.save_if_best_model(
-            val_loss, model, data_dir, f"{model_name}-last_epoch_{epoch + 1}"
-        )
+        model_saver.save_if_best_model(val_loss, model, output_dir, "model")
 
         if early_stopper.early_stop(val_loss):
-            return model,train_losses, val_losses, bleu_scores
+            return model, train_losses, val_losses, bleu_scores, optimizer.lrs
 
-    return model, train_losses, val_losses, bleu_scores
+    return model, train_losses, val_losses, bleu_scores, optimizer.lrs
 
 
 def _train_one_epoch(
     model: TransformerNet,
     training_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     vocab: dict[str, int],
-    optimizer: torch.optim.Optimizer | NoamOptimizer,
+    optimizer: NoamOptimizer,
     loss_fn: _LOSS_FN,
     epoch: int,
     device: torch.device,
@@ -157,10 +154,9 @@ def _train_one_epoch(
         _convert_tensor_to_caption(output, vocab) for output in outputs_normalized
     ]
 
-    example_idx = random.randint(0, len(decoded_predictions) - 1)
-
-    logger.info("Trgt: {}", decoded_targets[example_idx])
-    logger.info("Pred: {}", decoded_predictions[example_idx])
+    for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
+        logger.info("Trgt: {}", decoded_targets[example_idx])
+        logger.info("Pred: {}", decoded_predictions[example_idx])
 
     if tb_writer is not None:
         tb_writer.add_scalar("Loss/train", loss, epoch)
@@ -245,10 +241,9 @@ def _validate_one_epoch(
         tb_writer.add_scalar("Loss/validation", avg_loss, epoch)
         tb_writer.add_scalar("BLEU/validation", avg_bleu_metric, epoch)
 
-    example_idx = random.randint(0, len(decoded_predictions) - 1)
-
-    logger.info("Trgt: {}", decoded_targets[example_idx])
-    logger.info("Pred: {}", decoded_predictions[example_idx])
+    for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
+        logger.info("Trgt: {}", decoded_targets[example_idx])
+        logger.info("Pred: {}", decoded_predictions[example_idx])
 
     return avg_loss, avg_bleu_metric
 

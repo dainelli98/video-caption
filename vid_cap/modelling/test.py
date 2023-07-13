@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """Function to test models."""
 
-import random
-
+import numpy as np
 import torch
 import tqdm
 from loguru import logger
@@ -34,28 +33,35 @@ def test_model(
     bleu_metric = BLEUScore(n_gram=4)
     bleu_scores = []
 
+    sos_id = vocab["<sos>"]
+    eos_id = vocab["<eos>"]
+    max_len = 50
+
     with torch.no_grad():
         for data in tqdm.tqdm(test_loader, "Testing"):
             inputs, captions = data
 
-            captions_str, captions_end = _convert_captions_to_tensor(list(captions), vocab)
+            _, captions_end = _convert_captions_to_tensor(list(captions), vocab)
 
             inputs = inputs.to(device)
-            captions_str = captions_str.to(device)
+            batch_size = inputs.size(0)
+            captions = torch.full(
+                (batch_size, max_len), fill_value=eos_id, dtype=torch.long, device=device
+            )
+            captions[:, 0] = sos_id
+
             captions_end = captions_end.to(device)
 
-            outputs = model(inputs, captions_str)
+            for t in range(1, max_len):
+                outputs = model(inputs, captions[:, :t])
+                next_word_logits = outputs[:, t - 1, :]
+                captions[:, t] = next_word_logits.argmax(-1)
+
+            decoded_predictions = [_convert_tensor_to_caption(output, vocab) for output in captions]
 
             # Compute BLEU score
-            [
-                decoded_targets.append(_convert_tensor_to_caption(caption, vocab))
-                for caption in captions_end
-            ]
-            outputs_normalized = torch.argmax(outputs, dim=2)
-
-            [
-                decoded_predictions.append(_convert_tensor_to_caption(output, vocab))
-                for output in outputs_normalized
+            decoded_targets = [
+                _convert_tensor_to_caption(caption, vocab) for caption in captions_end
             ]
 
             bleu_metric.update(decoded_targets, decoded_predictions)
@@ -64,10 +70,9 @@ def test_model(
     avg_bleu_metric = torch.mean(torch.stack(bleu_scores))
     logger.info("Test BLEU score: {}", avg_bleu_metric)
 
-    example_idx = random.randint(0, len(decoded_predictions) - 1)
-
-    logger.info("Trgt: {}", decoded_targets[example_idx])
-    logger.info("Pred: {}", decoded_predictions[example_idx])
+    for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
+        logger.info("Trgt: {}", decoded_targets[example_idx])
+        logger.info("Pred: {}", decoded_predictions[example_idx])
 
     return avg_bleu_metric
 
@@ -105,5 +110,5 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, i
         word = next((key for key, val in vocab.items() if val == idx), "<unk>")
         words.append(word)
 
-    words = [word for word in words if word not in ["<sos>", "<eos>"]]
+    words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
     return " ".join(words)

@@ -47,6 +47,7 @@ pillow = "^10.0.0"
 matplotlib = "^3.7.2"
 torchmetrics = "^1.0.0"
 torcheval = "^0.0.6"
+plotly = "^5.15.0"
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["jupyter"], version = "23.3.0"}

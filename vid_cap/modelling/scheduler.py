@@ -28,11 +28,17 @@ class NoamOptimizer:
         self.model_size = model_size
         self._rate = 0
         self._tb_writer = tb_writer
+        self._lrs = []
 
     @property
     def lr(self) -> float:
         """Current learning rate."""
         return self._rate
+
+    @property
+    def lrs(self) -> list[float]:
+        """Learning rates."""
+        return self._lrs
 
     def step(self) -> None:
         """Update parameters and rate."""
@@ -43,6 +49,7 @@ class NoamOptimizer:
         for p in self.optimizer.param_groups:
             p["lr"] = rate
         self._rate = rate
+        self._lrs.append(rate)
         self.optimizer.step()
 
     def rate(self, step: int | None = None) -> float:

@@ -96,7 +96,12 @@ class VideoFeatDataset(Dataset):
         sorted_vocab.insert(0, "<unk>")
         sorted_vocab.insert(0, "<pad>")
 
-        truncated_sorted_vocab = sorted_vocab[:vocab_len]
+        if vocab_len < len(sorted_vocab):
+            truncated_sorted_vocab = sorted_vocab[:vocab_len]
+
+        else:
+            truncated_sorted_vocab = sorted_vocab
+
         self._vocab = {token: idx for idx, token in enumerate(truncated_sorted_vocab)}
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, str]:
