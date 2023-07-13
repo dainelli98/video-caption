@@ -33,28 +33,35 @@ def test_model(
     bleu_metric = BLEUScore(n_gram=4)
     bleu_scores = []
 
+    sos_id = vocab["<sos>"]
+    eos_id = vocab["<eos>"]
+    max_len = 50
+
     with torch.no_grad():
         for data in tqdm.tqdm(test_loader, "Testing"):
             inputs, captions = data
 
-            captions_str, captions_end = _convert_captions_to_tensor(list(captions), vocab)
+            _, captions_end = _convert_captions_to_tensor(list(captions), vocab)
 
             inputs = inputs.to(device)
-            captions_str = captions_str.to(device)
+            batch_size = inputs.size(0)
+            captions = torch.full(
+                (batch_size, max_len), fill_value=eos_id, dtype=torch.long, device=device
+            )
+            captions[:, 0] = sos_id
+
             captions_end = captions_end.to(device)
 
-            outputs = model(inputs, captions_str)
+            for t in range(1, max_len):
+                outputs = model(inputs, captions[:, :t])
+                next_word_logits = outputs[:, t - 1, :]
+                captions[:, t] = next_word_logits.argmax(-1)
+
+            decoded_predictions = [_convert_tensor_to_caption(output, vocab) for output in captions]
 
             # Compute BLEU score
-            [
-                decoded_targets.append(_convert_tensor_to_caption(caption, vocab))
-                for caption in captions_end
-            ]
-            outputs_normalized = torch.argmax(outputs, dim=2)
-
-            [
-                decoded_predictions.append(_convert_tensor_to_caption(output, vocab))
-                for output in outputs_normalized
+            decoded_targets = [
+                _convert_tensor_to_caption(caption, vocab) for caption in captions_end
             ]
 
             bleu_metric.update(decoded_targets, decoded_predictions)

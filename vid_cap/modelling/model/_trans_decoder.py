@@ -73,20 +73,17 @@ class TransformerNet(nn.Module):
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
         return mask.float().masked_fill(mask == 0, float("-inf")).masked_fill(mask == 1, float(0.0))
 
-    def forward(self, src: torch.Tensor, tgt: torch.Tensor, has_mask: bool = False) -> torch.Tensor:
+    def forward(self, src: torch.Tensor, tgt: torch.Tensor) -> torch.Tensor:
         tgt = self.dec_embedding(tgt)
         tgt = self.dec_pe(tgt)
         src = self.dec_pe(src)
 
-        if has_mask:
-            device = tgt.device
-            if self.tgt_mask is None or self.tgt_mask.size(0) != len(
-                tgt[0]
-            ):  # as we're working with batch
-                mask = self._generate_square_subsequent_mask(len(tgt[0])).to(device)
-                self.tgt_mask = mask
-        else:
-            self.tgt_mask = None
+        device = tgt.device
+        if self.tgt_mask is None or self.tgt_mask.size(0) != len(
+            tgt[0]
+        ):  # as we're working with batch
+            mask = self._generate_square_subsequent_mask(len(tgt[0])).to(device)
+            self.tgt_mask = mask
 
         transformer_out = self.decoder(tgt=tgt, memory=src, tgt_mask=self.tgt_mask)
         return self.dense(transformer_out)

@@ -16,7 +16,7 @@
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
-      "name": "Train",
+      "name": "Experiment",
       "request": "launch",
       "type": "python"
     },
