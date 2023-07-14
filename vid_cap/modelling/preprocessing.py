@@ -9,6 +9,8 @@ import torch
 from av.container.input import InputContainer
 from transformers import AutoImageProcessor, VideoMAEForVideoClassification, VideoMAEModel
 
+from vid_cap.modelling.video.video import Video
+
 _IMG_PROCESSOR_NAME: str = "MCG-NJU/videomae-base-finetuned-kinetics"
 _ENC_MODEL_NAME: str = "MCG-NJU/videomae-base-finetuned-kinetics"
 _ENC_MODEL: VideoMAEForVideoClassification = VideoMAEForVideoClassification.from_pretrained(
@@ -22,20 +24,28 @@ ENCODER: VideoMAEModel = _ENC_MODEL.videomae
 __all__: list[str] = ["gen_feat_vecs", "get_video_frames", "ENCODER", "IMG_PROCESSOR"]
 
 
-def gen_feat_vecs(filepaths: Path | str | Iterable[Path | str], n_frames: int) -> np.ndarray:
+def gen_feat_vecs(filepaths: Path | str | Iterable[Path | str], n_frames: int, use_key_frames: bool) -> np.ndarray:
     """Generate feature vectors from a video files.
 
     :param filepaths: Paths to the video files.
     :param n_frames: Number of frames to sample from the videos.
+    :param use_key_frames: Number of frames to sample from the videos.
     :return: Feature vector for videos.
     """
     if not isinstance(filepaths, list | tuple | set | np.ndarray):
         filepaths = [filepaths]
 
-    videos = [
-        IMG_PROCESSOR(list(get_video_frames(filepath, n_frames)), return_tensors="pt")
-        for filepath in filepaths
-    ]
+    if use_key_frames:
+        vd = Video()
+        videos = [
+            IMG_PROCESSOR(list(vd.extract_video_keyframes(no_of_frames = n_frames, file_path= filepath)), return_tensors="pt")
+                        for filepath in filepaths
+        ]
+    else:
+        videos = [
+            IMG_PROCESSOR(list(get_video_frames(filepath, n_frames), return_tensors="pt"))
+                        for filepath in filepaths
+        ]
 
     with torch.no_grad():
         return np.array([ENCODER(**video)[0][0].numpy() for video in videos])

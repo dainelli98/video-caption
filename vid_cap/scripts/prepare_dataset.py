@@ -5,13 +5,13 @@ from pathlib import Path
 import click
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
+from joblib import Parallel, cpu_count, delayed
 from loguru import logger
 
 from vid_cap import DATA_DIR
 from vid_cap.modelling import preprocessing as pre
 
-_SAMPLE_PERIOD = 32
+_SAMPLE_PERIOD = 8
 
 
 @click.command("prepare-dataset")
@@ -21,12 +21,14 @@ _SAMPLE_PERIOD = 32
     type=click.Path(exists=True, path_type=Path),
     help="Data directory",
 )
-def main(data_dir: Path) -> None:
+@click.option("--use-key-frames", is_flag=True, default=False, type=bool, help="Whether to select best key frames or random ones.")
+def main(data_dir: Path, use_key_frames: bool) -> None:
     """Prepare dataset with VideoMAE.
 
     \f
 
     :param data_dir: Path to data directory.
+    :param use_key_frames: Whether to select best key frames or random ones.
     """
     logger.info("Preparing dataset")
 
@@ -42,8 +44,9 @@ def main(data_dir: Path) -> None:
 
         (data_dir / "output" / split / "videos").mkdir(parents=True, exist_ok=True)
 
-        out_caps = Parallel(n_jobs=-1, verbose=1000)(
-            delayed(_process_video)(data_dir, split, videos_path, captions, counter, total, video)
+        n_processes = cpu_count() // 2 - 1
+        out_caps = Parallel(n_jobs=n_processes, verbose=1000)(
+            delayed(_process_video)(data_dir, split, videos_path, captions, counter, total, video, use_key_frames)
             for counter, video in enumerate(videos_path.iterdir(), 1)
         )
 
@@ -58,6 +61,7 @@ def _process_video(
     counter: int,
     total: int,
     video: Path,
+    use_key_frames: bool
 ) -> pd.DataFrame:
     """Process video and save it to disk.
 
@@ -75,7 +79,7 @@ def _process_video(
     video_path = videos_path / video
     stem = video.stem
 
-    feat_vec = pre.gen_feat_vecs(video_path, 16)[0, :, :]
+    feat_vec = pre.gen_feat_vecs(video_path, 16, use_key_frames)[0, :, :]
 
     feat_vec = feat_vec[::_SAMPLE_PERIOD, :]
 

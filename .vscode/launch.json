@@ -49,7 +49,10 @@
     },
     {
       "args": [
-        "prepare-dataset"
+        "prepare-dataset",
+        "--data-dir",
+        "C:/Users/joanh/Downloads/DATASET",
+        "--use-key-frames"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
