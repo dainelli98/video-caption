@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # ruff: noqa: PLR0913
 """Script to do experiment."""
+import os
 import platform
 import random
 from pathlib import Path
@@ -46,6 +47,7 @@ _SEED = 1234
     help="Captions per video used in the dataset.",
 )
 @click.option("--dropout", default=0.1, type=click.FloatRange(0, 1), help="Dropout rate.")
+@click.option("--bpe-num-operations", default=None, type=click.IntRange(1, 100000), help="bpe_num_operations.")
 def main(
     warmup_steps: int,
     loss_smoothing: float,
@@ -59,6 +61,7 @@ def main(
     vocab_len: int,
     caps_per_vid: int,
     dropout: float,
+    bpe_num_operations: int | None
 ) -> None:
     """Perform experiement.
 
@@ -83,6 +86,9 @@ def main(
 
     exp_time = pd.Timestamp.now()
 
+    for f in os.listdir(data_dir / "bpe"):
+        os.remove(os.path.join(data_dir / "bpe", f))
+
     gpu_model = "cpu"
 
     if use_gpu:
@@ -96,20 +102,23 @@ def main(
     logger.info(f"Using device : {device}")
 
     train_dataset = VideoFeatDataset(
+        "train",
         data_dir / "train" / "videos",
         data_dir / "train" / "captions.parquet",
         caps_per_vid,
         vocab_len,
+        data_dir=data_dir,
+        bpe_num_operations=bpe_num_operations
     )
 
     vocab_len = train_dataset.vocab_len
 
     valid_dataset = VideoFeatDataset(
-        data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", caps_per_vid
+       "val", data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", caps_per_vid, data_dir=data_dir, bpe_num_operations=bpe_num_operations
     )
 
     test_dataset = VideoFeatDataset(
-        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", caps_per_vid
+        "test", data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", caps_per_vid, data_dir=data_dir, bpe_num_operations=bpe_num_operations
     )
 
     hparams = {
@@ -162,6 +171,7 @@ def main(
         out_dir,
         writer,
         loss_smoothing,
+        train_dataset.bpe_codes_file
     )
 
     joblib.dump(train_dataset.vocab, out_dir / "vocab.pkl")

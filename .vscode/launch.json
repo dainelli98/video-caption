@@ -1,18 +1,21 @@
 {
   "configurations": [
+
     {
       "args": [
         "experiment",
         "--use-gpu",
         "--caps-per-vid",
-        "1",
+        "4",
         "--n-layers",
-        "1",
-        "--n-heads", "1",
+        "2",
         "--shuffle",
         "--vocab-len",
         "4000",
-        "--epochs", "2"
+        "--batch-size",
+        "100",
+        "--bpe-num-operations",
+        "5000"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
