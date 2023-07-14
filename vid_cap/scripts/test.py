@@ -10,7 +10,7 @@ from loguru import logger
 from torch.utils.data import DataLoader
 
 from vid_cap import DATA_DIR
-from vid_cap.dataset import VideoFeatDataset
+from vid_cap.dataset import VideoEvalDataset
 from vid_cap.modelling import test
 from vid_cap.modelling.model import TransformerNet
 
@@ -31,12 +31,6 @@ _MAX_TGT_LEN = 100
 )
 @click.option("--batch-size", default=64, type=click.IntRange(1, 512), help="Batch size.")
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to test with GPU")
-@click.option(
-    "--caps-per-vid",
-    default=1,
-    type=click.IntRange(1, 20),
-    help="Captions per video used in the dataset.",
-)
 def main(
     n_heads: int,
     data_dir: Path,
@@ -45,7 +39,6 @@ def main(
     n_layers: int,
     batch_size: int,
     use_gpu: bool,
-    caps_per_vid: int,
 ) -> None:
     """Test decoder.
 
@@ -58,7 +51,6 @@ def main(
     :param n_layers: Number of decoder layers.
     :param batch_size: Batch size.
     :param use_gpu: Whether to try to use GPU.
-    :param caps_per_vid: Captions per video used in the dataset.
     """
     gpu_model = "cpu"
 
@@ -74,8 +66,8 @@ def main(
 
     vocab = joblib.load(vocab_path)
 
-    test_dataset = VideoFeatDataset(
-        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", caps_per_vid
+    test_dataset = VideoEvalDataset(
+        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet"
     )
 
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
@@ -86,7 +78,7 @@ def main(
 
     model.load_state_dict(torch.load(model_path, map_location=device))
 
-    bleu_score = test.test_model(model, test_loader, vocab, device)
+    bleu_score = test.test_model(model, test_loader, test_dataset.captions, vocab, device)
 
     logger.info(f"Test BLEU score : {bleu_score}")
 

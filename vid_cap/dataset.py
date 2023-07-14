@@ -14,6 +14,62 @@ from subword_nmt.apply_bpe import BPE
 import calendar
 import time
 
+class VideoEvalDataset(Dataset):
+    """Dataset with video feature vectors and associated captions.
+
+    :param video_dir: Directory with videos.
+    :param caps_file: Path to captions file.
+    """
+
+    _data: list[tuple[torch.Tensor, int]]
+    _captions: pd.DataFrame
+
+    def __init__(self, video_dir: Path | str, caps_file: Path | str) -> None:
+        if not isinstance(video_dir, Path):
+            video_dir = Path(video_dir)
+
+        if not isinstance(caps_file, Path):
+            caps_file = Path(caps_file)
+
+        self._captions = pd.read_parquet(caps_file, dtype_backend="pyarrow")
+
+        self._data = [
+            (torch.tensor(np.load(video_dir / f"{video}.npy"), dtype=torch.float16), video)
+            for video in self._captions["video"].unique()
+        ]
+
+    @property
+    def captions(self) -> pd.DataFrame:
+        """Get captions.
+
+        :return: Captions.
+        """
+        return self._captions
+
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
+        """Get item.
+
+        :param index: Index.
+        :return: Video feature vector and associated captions.
+        """
+        return self._data[index]
+
+    def __len__(self) -> int:
+        """Get length.
+
+        :return: Length.
+        """
+        return len(self._data)
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        """Get shape of dataset.
+
+        :return: Shape of dataset.
+        """
+        return self._data[1][0].shape
+
+
 class VideoFeatDataset(Dataset):
     """Dataset with video feature vectors and associated captions.
 
