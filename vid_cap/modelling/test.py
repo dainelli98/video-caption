@@ -33,6 +33,8 @@ def test_model(
     bleu_metric = BLEUScore(n_gram=4)
     bleu_scores = []
 
+    id2word = {id_: word for word, id_ in vocab.items()}
+
     sos_id = vocab["<sos>"]
     eos_id = vocab["<eos>"]
     max_len = 50
@@ -57,11 +59,13 @@ def test_model(
                 next_word_logits = outputs[:, t - 1, :]
                 captions[:, t] = next_word_logits.argmax(-1)
 
-            decoded_predictions = [_convert_tensor_to_caption(output, vocab) for output in captions]
+            decoded_predictions = [
+                _convert_tensor_to_caption(output, id2word) for output in captions
+            ]
 
             # Compute BLEU score
             decoded_targets = [
-                _convert_tensor_to_caption(caption, vocab) for caption in captions_end
+                _convert_tensor_to_caption(caption, id2word) for caption in captions_end
             ]
 
             bleu_metric.update(decoded_targets, decoded_predictions)
@@ -97,18 +101,19 @@ def _convert_tokens_to_ids(tokens: str, vocab: dict[str, int]) -> list[int]:
     return [vocab.get(token, 1) for token in tokens.split()]
 
 
-def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, int]) -> str:
+def _convert_tensor_to_caption(caption_indices: torch.Tensor, id2word: dict[int, str]) -> str:
     """Decode a caption from token indices to words using the vocabulary.
 
     :param caption_indices: Tensor of token indices representing a caption.
-    :param vocab: Vocabulary mapping token indices to words.
+    :param id2word: Dictionary mapping token indices to words.
     :return: Decoded caption as a string.
     """
     caption_indices = caption_indices.cpu().numpy()
-    words = []
-    for idx in caption_indices:
-        word = next((key for key, val in vocab.items() if val == idx), "<unk>")
-        words.append(word)
+    words = [id2word.get(idx_, "<unk>") for idx_ in caption_indices]
+
+    if "<eos>" in words:
+        words = words[: words.index("<eos>")]
 
     words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
+
     return " ".join(words)
