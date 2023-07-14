@@ -53,6 +53,8 @@ def train(
     early_stopper = EarlyStopper(patience=2, min_delta=0)
     model_saver = ModelSaver()
 
+    id2word = {id_: word for word, id_ in vocab.items()}
+
     train_losses = []
     val_losses = []
     bleu_scores = []
@@ -63,6 +65,7 @@ def train(
             model,
             train_loader,
             vocab,
+            id2word,
             optimizer,
             loss_fn,
             epoch,
@@ -74,7 +77,7 @@ def train(
 
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
         val_loss, bleu = _validate_one_epoch(
-            model, valid_loader, vocab, loss_fn, epoch, device, tb_writer, label_smoothing
+            model, valid_loader, vocab, id2word, loss_fn, epoch, device, tb_writer, label_smoothing
         )
 
         val_losses.append(val_loss)
@@ -96,6 +99,7 @@ def _train_one_epoch(
     model: TransformerNet,
     training_loader: DataLoader | list[tuple[torch.Tensor, list[str]]],
     vocab: dict[str, int],
+    id2word: dict[int, str],
     optimizer: NoamOptimizer,
     loss_fn: _LOSS_FN,
     epoch: int,
@@ -108,6 +112,7 @@ def _train_one_epoch(
     :param model: Model to train.
     :param training_loader: Training data loader.
     :param vocab: Vocabulary.
+    :param id2word: ID to word mapping.
     :param optimizer: Optimizer.
     :param loss_fn: Loss function.
     :param epoch: Epoch number.
@@ -146,12 +151,12 @@ def _train_one_epoch(
 
     loss = running_loss / len(training_loader)
 
-    decoded_targets = [_convert_tensor_to_caption(caption, vocab) for caption in captions_end]
+    decoded_targets = [_convert_tensor_to_caption(caption, id2word) for caption in captions_end]
 
     outputs_normalized = torch.argmax(outputs, dim=2)
 
     decoded_predictions = [
-        _convert_tensor_to_caption(output, vocab) for output in outputs_normalized
+        _convert_tensor_to_caption(output, id2word) for output in outputs_normalized
     ]
 
     for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
@@ -168,6 +173,7 @@ def _validate_one_epoch(
     model: TransformerNet,
     val_loader: DataLoader,
     vocab: dict[str, int],
+    id2word: dict[int, str],
     loss_fn: _LOSS_FN,
     epoch: int,
     device: torch.device,
@@ -179,6 +185,7 @@ def _validate_one_epoch(
     :param model: Model to validate.
     :param val_loader: Validation data loader.
     :param vocab: Vocabulary.
+    :param id2word: ID to word mapping.
     :param loss_fn: Loss function.
     :param epoch: Epoch number.
     :param device: Device to use.
@@ -219,13 +226,13 @@ def _validate_one_epoch(
 
             # Compute BLEU score
             [
-                decoded_targets.append(_convert_tensor_to_caption(caption, vocab))
+                decoded_targets.append(_convert_tensor_to_caption(caption, id2word))
                 for caption in captions_end
             ]
             outputs_normalized = torch.argmax(outputs, dim=2)
 
             [
-                decoded_predictions.append(_convert_tensor_to_caption(output, vocab))
+                decoded_predictions.append(_convert_tensor_to_caption(output, id2word))
                 for output in outputs_normalized
             ]
 
@@ -268,20 +275,18 @@ def _convert_tokens_to_ids(tokens: str, vocab: dict[str, int]) -> list[int]:
     return [vocab.get(token, 1) for token in tokens.split()]
 
 
-def _convert_tensor_to_caption(caption_indices: torch.Tensor, vocab: dict[str, int]) -> str:
+def _convert_tensor_to_caption(caption_indices: torch.Tensor, id2word: dict[int, str]) -> str:
     """Decode a caption from token indices to words using the vocabulary.
 
     :param caption_indices: Tensor of token indices representing a caption.
-    :param vocab: Vocabulary mapping token indices to words.
+    :param id2word: Dictionary mapping token indices to words.
     :return: Decoded caption as a string.
     """
     caption_indices = caption_indices.cpu().numpy()
-    words = []
-    for idx in caption_indices:
-        word = next((key for key, val in vocab.items() if val == idx), "<unk>")
-        words.append(word)
+    words = [id2word.get(idx_, "<unk>") for idx_ in caption_indices]
 
     words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
+
     return " ".join(words)
 
 
