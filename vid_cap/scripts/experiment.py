@@ -142,21 +142,7 @@ def main(
 
     criterion = nn.CrossEntropyLoss()
 
-    out_dir = (
-        data_dir
-        / "output"
-        / f"embeddings_{train_dataset.shape[0]}"
-        / f"batch_size_{batch_size}"
-        / f"n_heads_{n_heads}"
-        / f"n_layers_{n_layers}"
-        / f"vocab_len_{vocab_len}"
-        / f"caps_per_vid_{caps_per_vid}"
-        / f"dropout_{dropout}"
-        / f"warmup_steps_{warmup_steps}"
-        / f"loss_smoothing_{loss_smoothing}"
-        / f"shuffle_{shuffle}"
-        / exp_time.strftime("%Y%m%d%H%M%S")
-    )
+    out_dir = data_dir / "output" / exp_time.strftime("%Y%m%d%H%M%S")
 
     model, train_loss, val_loss, bleu_scores, lrs = train.train(
         model,
