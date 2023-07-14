@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from vid_cap import DATA_DIR
-from vid_cap.dataset import VideoFeatDataset
+from vid_cap.dataset import VideoEvalDataset, VideoFeatDataset
 from vid_cap.modelling import test, train
 from vid_cap.modelling.model import TransformerNet
 from vid_cap.modelling.scheduler import NoamOptimizer
@@ -107,9 +107,8 @@ def main(
     valid_dataset = VideoFeatDataset(
         data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", caps_per_vid
     )
-
-    test_dataset = VideoFeatDataset(
-        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", caps_per_vid
+    test_dataset = VideoEvalDataset(
+        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet"
     )
 
     hparams = {
@@ -176,7 +175,9 @@ def main(
 
     model.load_state_dict(torch.load(out_dir / "model", map_location=device))
 
-    bleu_score = test.test_model(model, test_loader, train_dataset.vocab, device)
+    bleu_score = test.test_model(
+        model, test_loader, test_dataset.captions, train_dataset.vocab, device
+    )
 
     logger.info(f"Test BLEU score : {bleu_score}")
 
