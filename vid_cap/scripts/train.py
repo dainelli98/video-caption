@@ -2,10 +2,12 @@
 # ruff: noqa: PLR0913
 """Script to train decoder."""
 import platform
+import random
 from pathlib import Path
 
 import click
 import joblib
+import numpy as np
 import pandas as pd
 import torch
 from loguru import logger
@@ -21,6 +23,7 @@ from vid_cap.modelling.scheduler import NoamOptimizer
 from vid_cap.utils import loss_plot
 
 _MAX_TGT_LEN = 100
+_SEED = 1234
 
 
 @click.command("train")
@@ -74,6 +77,10 @@ def main(
     :param caps_per_vid: Number of captions per video.
     :param dropout: Dropout rate.
     """
+    torch.manual_seed(_SEED)
+    np.random.seed(_SEED)
+    random.seed(_SEED)
+
     gpu_model = "cpu"
 
     if use_gpu:

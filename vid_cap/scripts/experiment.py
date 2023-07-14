@@ -2,6 +2,7 @@
 # ruff: noqa: PLR0913
 """Script to do experiment."""
 import platform
+import random
 from pathlib import Path
 
 import click
@@ -22,6 +23,7 @@ from vid_cap.modelling.scheduler import NoamOptimizer
 from vid_cap.utils import loss_plot
 
 _MAX_TGT_LEN = 100
+_SEED = 1234
 
 
 @click.command("experiment")
@@ -75,6 +77,10 @@ def main(
     :param caps_per_vid: Number of captions per video.
     :param dropout: Dropout rate.
     """
+    torch.manual_seed(_SEED)
+    np.random.seed(_SEED)
+    random.seed(_SEED)
+
     exp_time = pd.Timestamp.now()
 
     gpu_model = "cpu"
