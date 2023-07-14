@@ -3,6 +3,7 @@
 """Train - decoder."""
 from pathlib import Path
 
+import re
 import numpy as np
 import torch
 import torch.nn.functional as F  # ruff: noqa: N812
@@ -16,6 +17,8 @@ from torcheval.metrics import BLEUScore
 from vid_cap.modelling.scheduler import NoamOptimizer
 from vid_cap.utils.early_stopper import EarlyStopper
 from vid_cap.utils.model_saver import ModelSaver
+from subword_nmt.apply_bpe import BPE
+
 
 from .model import TransformerNet
 
@@ -34,6 +37,7 @@ def train(
     output_dir: Path,
     tb_writer: SummaryWriter | None = None,
     label_smoothing: float = 0.0,
+    bpe_codes_file: Path | None = None
 ) -> tuple[TransformerNet, list[float], list[float], list[float], list[float]]:
     """Train model.
 
@@ -72,12 +76,13 @@ def train(
             device,
             tb_writer,
             label_smoothing,
+            bpe_codes_file
         )
         train_losses.append(train_loss)
 
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
         val_loss, bleu = _validate_one_epoch(
-            model, valid_loader, vocab, id2word, loss_fn, epoch, device, tb_writer, label_smoothing
+            model, valid_loader, vocab, id2word, loss_fn, epoch, device, tb_writer, label_smoothing, bpe_codes_file
         )
 
         val_losses.append(val_loss)
@@ -106,6 +111,7 @@ def _train_one_epoch(
     device: torch.device,
     tb_writer: SummaryWriter | None,
     label_smoothing: float = 0.0,
+    bpe_codes_file: Path | None = None
 ) -> float:
     """Train one epoch.
 
@@ -151,12 +157,12 @@ def _train_one_epoch(
 
     loss = running_loss / len(training_loader)
 
-    decoded_targets = [_convert_tensor_to_caption(caption, id2word) for caption in captions_end]
+    decoded_targets = [_convert_tensor_to_caption(caption, id2word, bpe_codes_file) for caption in captions_end]
 
     outputs_normalized = torch.argmax(outputs, dim=2)
 
     decoded_predictions = [
-        _convert_tensor_to_caption(output, id2word) for output in outputs_normalized
+        _convert_tensor_to_caption(output, id2word, bpe_codes_file) for output in outputs_normalized
     ]
 
     for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
@@ -179,6 +185,7 @@ def _validate_one_epoch(
     device: torch.device,
     tb_writer: SummaryWriter | None,
     label_smoothing: float = 0.0,
+    bpe_codes_file: Path | None = None
 ) -> tuple[float, float]:
     """Validate one epoch.
 
@@ -226,13 +233,13 @@ def _validate_one_epoch(
 
             # Compute BLEU score
             [
-                decoded_targets.append(_convert_tensor_to_caption(caption, id2word))
+                decoded_targets.append(_convert_tensor_to_caption(caption, id2word, bpe_codes_file))
                 for caption in captions_end
             ]
             outputs_normalized = torch.argmax(outputs, dim=2)
 
             [
-                decoded_predictions.append(_convert_tensor_to_caption(output, id2word))
+                decoded_predictions.append(_convert_tensor_to_caption(output, id2word, bpe_codes_file))
                 for output in outputs_normalized
             ]
 
@@ -275,7 +282,7 @@ def _convert_tokens_to_ids(tokens: str, vocab: dict[str, int]) -> list[int]:
     return [vocab.get(token, 1) for token in tokens.split()]
 
 
-def _convert_tensor_to_caption(caption_indices: torch.Tensor, id2word: dict[int, str]) -> str:
+def _convert_tensor_to_caption(caption_indices: torch.Tensor, id2word: dict[int, str], bpe_codes_file: Path | None = None) -> str:
     """Decode a caption from token indices to words using the vocabulary.
 
     :param caption_indices: Tensor of token indices representing a caption.
@@ -287,7 +294,10 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, id2word: dict[int,
 
     words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
 
-    return " ".join(words)
+    caption = " ".join(words)
+    if(bpe_codes_file != None):
+        caption = _decode_bpe(caption, bpe_codes_file)
+    return caption
 
 
 def _smooth_labels(y: torch.Tensor, smooth_factor: float) -> torch.Tensor:
@@ -298,3 +308,7 @@ def _smooth_labels(y: torch.Tensor, smooth_factor: float) -> torch.Tensor:
     :return: A new matrix of smoothed labels.
     """
     return y * (1 - smooth_factor) + smooth_factor / y.size(1)
+
+def _decode_bpe(caption_to_decode: str, bpe_codes_file: Path) -> str:
+    cleaned_text = re.sub(r'(@@ )|(@@ ?$)', '', caption_to_decode)
+    return cleaned_text

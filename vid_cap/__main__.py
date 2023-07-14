@@ -2,7 +2,6 @@
 # ruff: noqa: D401
 """Entry point."""
 import click
-
 from . import __version__, scripts
 
 
