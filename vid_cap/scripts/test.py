@@ -66,8 +66,13 @@ def main(
 
     vocab = joblib.load(vocab_path)
 
+    bpe_codes_file = data_dir / "bpe" / "bpe.codes"
+
+    if not bpe_codes_file.is_file():
+        bpe_codes_file = None
+
     test_dataset = VideoEvalDataset(
-        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet"
+        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", bpe_codes_file=bpe_codes_file
     )
 
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)

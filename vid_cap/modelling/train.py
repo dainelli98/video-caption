@@ -289,7 +289,7 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, id2word: dict[int,
 
     caption = " ".join(words)
     if(bpe_codes_file != None):
-        caption = _decode_bpe(caption, bpe_codes_file)
+        caption = _decode_bpe(caption)
     return caption
 
 
@@ -302,6 +302,6 @@ def _smooth_labels(y: torch.Tensor, smooth_factor: float) -> torch.Tensor:
     """
     return y * (1 - smooth_factor) + smooth_factor / y.size(1)
 
-def _decode_bpe(caption_to_decode: str, bpe_codes_file: Path) -> str:
+def _decode_bpe(caption_to_decode: str) -> str:
     cleaned_text = re.sub(r'(@@ )|(@@ ?$)', '', caption_to_decode)
     return cleaned_text

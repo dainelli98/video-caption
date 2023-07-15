@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Function to test models."""
 
+import re
+from anyio import Path
 import numpy as np
 import pandas as pd
 import torch
@@ -19,6 +21,7 @@ def test_model(
     data_captions: pd.DataFrame,
     vocab: dict[str, int],
     device: torch.device,
+    bpe_codes_file: Path | None = None
 ) -> float:
     """Test the model.
 
@@ -45,7 +48,7 @@ def test_model(
             for vid_id in vid_ids:
                 vid_id = vid_id.item()
                 targets = [
-                    _convert_tensor_to_caption(_convert_tokens_to_ids(cap, vocab), id2word)
+                    _convert_tensor_to_caption(_convert_tokens_to_ids(cap, vocab), id2word, bpe_codes_file)
                     for cap in data_captions[data_captions["video"] == vid_id]["caption"]
                 ]
 
@@ -64,7 +67,7 @@ def test_model(
                 captions[:, t] = next_word_logits.argmax(-1)
 
             [
-                decoded_predictions.append(_convert_tensor_to_caption(output, id2word))
+                decoded_predictions.append(_convert_tensor_to_caption(output, id2word, bpe_codes_file))
                 for output in captions
             ]
 
@@ -100,7 +103,7 @@ def _convert_tokens_to_ids(tokens: str, vocab: dict[str, int]) -> list[int]:
 
 
 def _convert_tensor_to_caption(
-    caption_indices: torch.Tensor | list[int], id2word: dict[int, str]
+    caption_indices: torch.Tensor | list[int], id2word: dict[int, str], bpe_codes_file: Path | None = None
 ) -> str:
     """Decode a caption from token indices to words using the vocabulary.
 
@@ -117,4 +120,11 @@ def _convert_tensor_to_caption(
 
     words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
 
-    return " ".join(words)
+    caption = " ".join(words)
+    if(bpe_codes_file != None):
+        caption = _decode_bpe(caption)
+    return caption
+
+def _decode_bpe(caption_to_decode: str) -> str:
+    cleaned_text = re.sub(r'(@@ )|(@@ ?$)', '', caption_to_decode)
+    return cleaned_text
