@@ -5,6 +5,7 @@ import os
 import platform
 import random
 from pathlib import Path
+import shutil
 
 import click
 import joblib
@@ -85,6 +86,10 @@ def main(
     random.seed(_SEED)
 
     exp_time = pd.Timestamp.now()
+
+    is_bpe_foler = os.path.exists(data_dir / "bpe")
+    if not is_bpe_foler:
+        os.makedirs(data_dir / "bpe")
 
     for f in os.listdir(data_dir / "bpe"):
         os.remove(os.path.join(data_dir / "bpe", f))
@@ -181,6 +186,7 @@ def main(
     )
 
     joblib.dump(train_dataset.vocab, out_dir / "vocab.pkl")
+    shutil.copy(train_dataset.bpe_codes_file, out_dir)
 
     loss_plot.plot_and_store_graphs(train_loss, val_loss, bleu_scores, lrs, out_dir)
 

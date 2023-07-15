@@ -27,6 +27,9 @@ _MAX_TGT_LEN = 100
     "--vocab-path", required=True, type=click.Path(exists=True), help="Path to vocabulary file"
 )
 @click.option(
+    "--bpe-codes-path", required=False, type=click.Path(exists=True), help="Path bpe codes file"
+)
+@click.option(
     "--n-layers", default=4, type=click.IntRange(1, 128), help="Number of decoder layers."
 )
 @click.option("--batch-size", default=64, type=click.IntRange(1, 512), help="Batch size.")
@@ -39,6 +42,7 @@ def main(
     n_layers: int,
     batch_size: int,
     use_gpu: bool,
+    bpe_codes_path: Path | None
 ) -> None:
     """Test decoder.
 
@@ -66,13 +70,12 @@ def main(
 
     vocab = joblib.load(vocab_path)
 
-    bpe_codes_file = data_dir / "bpe" / "bpe.codes"
 
-    if not bpe_codes_file.is_file():
-        bpe_codes_file = None
+    # if not bpe_codes_file.is_file():
+    #     bpe_codes_file = None
 
     test_dataset = VideoEvalDataset(
-        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", bpe_codes_file=bpe_codes_file
+        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", bpe_codes_file=bpe_codes_path
     )
 
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
@@ -83,7 +86,7 @@ def main(
 
     model.load_state_dict(torch.load(model_path, map_location=device))
 
-    bleu_score = test.test_model(model, test_loader, test_dataset.captions, vocab, device)
+    bleu_score = test.test_model(model, test_loader, test_dataset.captions, vocab, device, bpe_codes_path)
 
     logger.info(f"Test BLEU score : {bleu_score}")
 

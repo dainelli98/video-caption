@@ -7,6 +7,8 @@
         "--use-gpu",
         "--caps-per-vid",
         "2",
+        "--n-heads",
+        "4",
         "--n-layers",
         "2",
         "--shuffle",
@@ -17,7 +19,7 @@
         "--bpe-num-operations",
         "500",
         "--epochs",
-        "1"
+        "50"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
@@ -34,7 +36,30 @@
       "name": "Prepare dataset",
       "request": "launch",
       "type": "python"
-    }
+    },
+    {
+      "args": [
+        "test",
+        "--use-gpu",
+        "--n-heads",
+        "4",
+        "--n-layers",
+        "2",
+        "--batch-size",
+        "64",
+        "--vocab-path",
+        "C:\\Users\\joanh\\repos\\video-caption\\data\\output\\20230715200216\\vocab.pkl",
+        "--model-path",
+        "C:\\Users\\joanh\\repos\\video-caption\\data\\output\\20230715200216\\model",
+        "--bpe-codes-path",
+        "C:\\Users\\joanh\\repos\\video-caption\\data\\output\\20230715200216\\bpe.codes"
+      ],
+      "justMyCode": true,
+      "module": "vid_cap.__main__",
+      "name": "Test",
+      "request": "launch",
+      "type": "python"
+    },
   ],
   "version": "0.2.0"
 }
