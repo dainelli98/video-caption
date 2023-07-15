@@ -1,86 +1,68 @@
-# Video Caption Generator
 
-Project to generate descriptions of the content of short videos made as part of postgraduate degree in Artificial Intelligence with Deep Learning.
+# Video Caption
 
-## Dependencies
 
-Lorem ipsum...
+## Team Information
+- Team Members
+    - Daniel Martín
+    - Joan Pascual
+    - Juan Bacardit
+    - Sergi Taramon
+- Advisor: Carlos Escolano
+- Framework: Pytorch
 
-## Cloning and first steps
+## Project Goals
+Generate a representative brief description of a small video by: 
+- Use transfer learning to encode video information
+- Implement transformer decoder to generate captions
+    - Extract key frames from a video input using efficient algorithms.
+    - Encode these key frames using VideoMae, an advanced video encoder.
+    - Combine video embeddings with corresponding captions embeddings.
+- Train a transformer decoder to generate captions explaining the video content.
+- Achieve valid and accurate captions explaining what happens in a given video input.
+- Deploy built solution on Google Cloud
 
-```shell
-git clone https://github.com/dainelli98/video_caption.git
-```
+## Environment Setup
+- Description of the environment setup
 
-After having cloned the repo, create a virtual environment and install Python packages:
+## Dataset
+- Selected dataset
+- Data preparation
 
-```shell
-make venv
-```
+## Methods/Algorithms Used
 
-## Installation
+- Key Frame Extraction: This is the initial step where we extract important frames from the video using an efficient extraction algorithm.
+- VideoMae Encoder: We use this advanced encoder to process the extracted key frames into a form that can be used for model training.
+- Caption Embeddings: Captions are processed into embeddings that represent the semantic meaning of the text.
+- Transformer Decoder: We use a transformer-based model to learn the relationship between the video embeddings and captions embeddings, and generate appropriate captions for new video inputs.
 
-Install package via pip using:
+![General data flow](./report/images/general_flow.png)
 
-```shell
-pip install .
-```
+### Key Frame Extraction:
+### Caption Embeddings
+### Transformer Decoder
 
-## Passwords
+## Model Architecture
+- Model design
+- Architecture
 
-Some applications connect to any third-party service (for example a SQL server) requiring
-a user name and a password.
+## Experiments
+- Experiment 1
+- Experiment 2
 
-This kind of information shall be never be hardcoded in the code or saved in any configuration
-file that may be uploaded to the repository.
+## Results Summary
+- Summary of results
 
-A simple way to handle critical data is saving them as environment variables.
+## Conclusions
+- Conclusion 1
+- Conclusion 2
+- Conclusion 3
+- Conclusion 4
 
-Simply create a `.env` file at the root of the repository. Then and save user names and passwords
-like:
+## Next Steps
+- Next Step 1
+- Next Step 2
 
-```
-YOUR_USERNAME=your_username
-YOUR_PASSWORD=your_password
-```
-
-You can then read `.env` files for Python code with the `dotenv` package.
-
-`.env` files are excluded from the Git repository in the `.gitignore` file.
-
-## Poetry
-
-To include a new package to the project it has to be added into the pyproject.toml
-under the correct group. Application packages have to be included inside `tool.poetry.dependencies`.
-Other packages have to be included in their respective groups like dev, docs or custom groups.
-
-To add a package run `poetry add [options] [--] <name>`. You can indicate the group to
-add the dependency to with the option `--group=GROUP`.
-
-To remove a package run `poetry remove [options] [--] <packages>`. You can indicate the group to
-remove the dependency from with the option `--group=GROUP`.
-
-To update the `poetry.lock` file, run `poetry lock --no-update`.
-
-Run `poetry list` to get more information about all the commands that poetry can run.
-
-## Testing
-
-To verify correct installation, execute the Video Caption Generator tests by running
-the following command in your Python environment:
-
-```shell
-make tests-basic
-```
-
-## Generate documentation
-
-Run the following command to generate project documentation:
-
-```shell
-make docs
-```
-
-## Contributors
-
-- Contributor name ([contributor email](mailto:contributor email))
+## References
+- Reference 1
+- Reference 2
