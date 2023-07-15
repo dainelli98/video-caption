@@ -11,8 +11,69 @@ from torch.utils.data import Dataset
 
 from subword_nmt.learn_bpe import learn_bpe
 from subword_nmt.apply_bpe import BPE
-import calendar
-import time
+
+class VideoEvalDataset(Dataset):
+    """Dataset with video feature vectors and associated captions.
+
+    :param video_dir: Directory with videos.
+    :param caps_file: Path to captions file.
+    """
+
+    _data: list[tuple[torch.Tensor, int]]
+    _captions: pd.DataFrame
+
+    def __init__(self, video_dir: Path | str, caps_file: Path | str, bpe_codes_file: Path | str | None) -> None:
+        if not isinstance(video_dir, Path):
+            video_dir = Path(video_dir)
+
+        if not isinstance(caps_file, Path):
+            caps_file = Path(caps_file)
+
+
+        self._captions = pd.read_parquet(caps_file, dtype_backend="pyarrow")
+        
+        if bpe_codes_file is not None:
+            bpe = BPE(open(bpe_codes_file, "r", encoding="utf-8"))
+            for idx, row in tqdm.tqdm( self._captions.iterrows(), f"Processing test captions with BPE codes"):
+                encoded_line = bpe.process_line(row["caption"])
+                self._captions.at[idx, "caption"] = encoded_line
+
+        self._data = [
+            (torch.tensor(np.load(video_dir / f"{video}.npy"), dtype=torch.float16), video)
+            for video in self._captions["video"].unique()
+        ]
+
+    @property
+    def captions(self) -> pd.DataFrame:
+        """Get captions.
+
+        :return: Captions.
+        """
+        return self._captions
+
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
+        """Get item.
+
+        :param index: Index.
+        :return: Video feature vector and associated captions.
+        """
+        return self._data[index]
+
+    def __len__(self) -> int:
+        """Get length.
+
+        :return: Length.
+        """
+        return len(self._data)
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        """Get shape of dataset.
+
+        :return: Shape of dataset.
+        """
+        return self._data[1][0].shape
+
 
 class VideoFeatDataset(Dataset):
     """Dataset with video feature vectors and associated captions.
@@ -154,12 +215,12 @@ class VideoFeatDataset(Dataset):
 
         if self._type == "train":
             # Generate BPE codes
-            print("Generating BPE codes")
+            print(f"Generating {self._type} BPE codes")
             with open(self._bpe_codes_file, "w", encoding="utf-8") as codes_file:
                 learn_bpe(open(bpe_captions_file, "r", encoding="utf-8"), codes_file, bpe_num_operations, min_frequency=1)
 
         bpe = BPE(open(self._bpe_codes_file, "r", encoding="utf-8"))
-        for idx, row in tqdm.tqdm( self._captions.iterrows(), f"Processing captions with BPE codes"):
+        for idx, row in tqdm.tqdm( self._captions.iterrows(), f"Processing {self._type} captions with BPE codes"):
             encoded_line = bpe.process_line(row["caption"])
             self._captions.at[idx, "caption"] = encoded_line
 

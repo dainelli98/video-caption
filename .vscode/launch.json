@@ -6,7 +6,7 @@
         "experiment",
         "--use-gpu",
         "--caps-per-vid",
-        "4",
+        "2",
         "--n-layers",
         "2",
         "--shuffle",
@@ -15,7 +15,9 @@
         "--batch-size",
         "100",
         "--bpe-num-operations",
-        "5000"
+        "500",
+        "--epochs",
+        "1"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",

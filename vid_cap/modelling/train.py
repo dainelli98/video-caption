@@ -12,7 +12,7 @@ from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torcheval.metrics import BLEUScore
+from torcheval.metrics.functional.text import bleu_score
 
 from vid_cap.modelling.scheduler import NoamOptimizer
 from vid_cap.utils.early_stopper import EarlyStopper
@@ -129,8 +129,7 @@ def _train_one_epoch(
     model.train()
     running_loss = 0.0
 
-    for data in tqdm.tqdm(training_loader, f"Train epoch {epoch + 1}"):
-        inputs, captions = data
+    for inputs, captions in tqdm.tqdm(training_loader, f"Train epoch {epoch + 1}"):
         captions_str, captions_end = _convert_captions_to_tensor(list(captions), vocab)
 
         inputs = inputs.to(device)
@@ -205,13 +204,9 @@ def _validate_one_epoch(
     running_loss = 0.0
     decoded_predictions = []
     decoded_targets = []
-    bleu_metric = BLEUScore(n_gram=4)
-    bleu_scores = []
 
     with torch.no_grad():
-        for data in tqdm.tqdm(val_loader, f"Validation epoch {epoch + 1}"):
-            inputs, captions = data
-
+        for inputs, captions in tqdm.tqdm(val_loader, f"Validation epoch {epoch + 1}"):
             captions_str, captions_end = _convert_captions_to_tensor(list(captions), vocab)
 
             inputs = inputs.to(device)
@@ -243,23 +238,21 @@ def _validate_one_epoch(
                 for output in outputs_normalized
             ]
 
-            bleu_metric.update(decoded_targets, decoded_predictions)
-            bleu_scores.append(bleu_metric.compute())
+    score = bleu_score(decoded_targets, decoded_predictions, 4).item()
 
     avg_loss = running_loss / len(val_loader)
-    avg_bleu_metric = torch.mean(torch.stack(bleu_scores))
     logger.info("Validation loss: {}", avg_loss)
-    logger.info("Validation BLEU score: {}", avg_bleu_metric)
+    logger.info("Validation BLEU score: {}", score)
 
     if tb_writer is not None:
         tb_writer.add_scalar("Loss/validation", avg_loss, epoch)
-        tb_writer.add_scalar("BLEU/validation", avg_bleu_metric, epoch)
+        tb_writer.add_scalar("BLEU/validation", score, epoch)
 
     for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
         logger.info("Trgt: {}", decoded_targets[example_idx])
         logger.info("Pred: {}", decoded_predictions[example_idx])
 
-    return avg_loss, avg_bleu_metric
+    return avg_loss, score
 
 
 def _convert_captions_to_tensor(
@@ -296,7 +289,7 @@ def _convert_tensor_to_caption(caption_indices: torch.Tensor, id2word: dict[int,
 
     caption = " ".join(words)
     if(bpe_codes_file != None):
-        caption = _decode_bpe(caption, bpe_codes_file)
+        caption = _decode_bpe(caption)
     return caption
 
 
@@ -309,6 +302,6 @@ def _smooth_labels(y: torch.Tensor, smooth_factor: float) -> torch.Tensor:
     """
     return y * (1 - smooth_factor) + smooth_factor / y.size(1)
 
-def _decode_bpe(caption_to_decode: str, bpe_codes_file: Path) -> str:
+def _decode_bpe(caption_to_decode: str) -> str:
     cleaned_text = re.sub(r'(@@ )|(@@ ?$)', '', caption_to_decode)
     return cleaned_text
