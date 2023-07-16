@@ -741,6 +741,6 @@ This together with the previous point may enable us to train with the full embed
 - [MSR-VTT: A Large Video Description Dataset for Bridging Video and Language](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/cvpr16.msr-vtt.tmei_-1.pdf)
 - [VideoMAE: Masked Autoencoders are Data-Efficient Learners for Self-Supervised Video Pre-Training](https://arxiv.org/abs/2203.12602)
 - [VideoMAE Huggingface](https://huggingface.co/docs/transformers/main/model_doc/videomae)
-["Attention Is All You Need"](https://arxiv.org/abs/1706.03762)
+-[Attention Is All You Need](https://arxiv.org/abs/1706.03762)
 
 **TODO:**
