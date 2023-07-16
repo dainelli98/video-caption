@@ -46,8 +46,12 @@ def test_model(
             for vid_id in vid_ids:
                 vid_id = vid_id.item()
                 targets = [
-                    utils.convert_tensor_to_caption(
-                        utils.convert_tokens_to_ids(cap, vocab), id2word, use_bpe
+                    (
+                        utils.convert_tensor_to_caption(
+                            utils.convert_tokens_to_ids(cap, vocab), id2word, use_bpe
+                        )
+                        if not use_bpe
+                        else cap
                     )
                     for cap in data_captions[data_captions["video"] == vid_id]["caption"]
                 ]
