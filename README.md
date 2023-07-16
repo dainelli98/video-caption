@@ -316,7 +316,7 @@ Example:
     {
       "sen_id": 1,
       "video_id": "video0",
-      "caption": "A person is drawing a picture."
+      "caption": "A person is painting."
     }
     ...
   ]
