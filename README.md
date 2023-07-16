@@ -342,7 +342,7 @@ Also, the videos can be found already extracted from YouTube in [Mediafire](http
 
 We used the predefined distribution of the original dataset (Train: 6513, Val: 497 and Test: 2990). In order to transform the original data set that contains videos and related captions, we decided to use an existing model as a transformer encoder in order to generate the corresponding embeddings for the videos and correlate those video embeddings with the captions.
 
-We implemented a script [prepare_dataset](./vid_cap/scripts/prepare_dataset.py) that allows to generate video encoddings with a giving sampling value.
+We implemented a script [prepare_dataset](./vid_cap/scripts/prepare_dataset.py) that allows to generate video encodings with a giving sampling value.
 
 #### Frame extraction
 
