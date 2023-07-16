@@ -730,7 +730,7 @@ The abovementioned framework could be deployed as an application accessible thro
 
 ### Fine-tune the model encoder
 
-Even we wanted to use a fully pretrained model, and we were able to obtain good enough results with it, we think that it would be worth exploring if it is possible to obtain better results if we fine-tune the model encoder retraining it with de decoder and our training data.
+Even we wanted to use a fully pretrained model, and we were able to obtain good enough results with it, we think that it would be worth exploring if it is possible to obtain better results if we fine-tune the model encoder retraining it with the decoder and our training data.
 
 This together with the previous point may enable us to train with the full embeddings and bigger model architectures. Though it may be unnecessary given that we are already obtaining good results.
 
