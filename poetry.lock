@@ -2380,6 +2380,22 @@ files = [
 ]
 
 [[package]]
+name = "mock"
+version = "5.1.0"
+description = "Rolling backport of unittest.mock for all Pythons"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "mock-5.1.0-py3-none-any.whl", hash = "sha256:18c694e5ae8a208cdb3d2c20a993ca1a7b0efa258c247a1e565150f477f83744"},
+    {file = "mock-5.1.0.tar.gz", hash = "sha256:5e96aad5ccda4718e0a229ed94b2024df75cc2d55575ba5762d31f5767b8767d"},
+]
+
+[package.extras]
+build = ["blurb", "twine", "wheel"]
+docs = ["sphinx"]
+test = ["pytest", "pytest-cov"]
+
+[[package]]
 name = "mpmath"
 version = "1.3.0"
 description = "Python library for arbitrary-precision floating-point arithmetic"
@@ -4135,6 +4151,21 @@ pure-eval = "*"
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
+name = "subword-nmt"
+version = "0.3.8"
+description = "Unsupervised Word Segmentation for Neural Machine Translation and Text Generation"
+optional = false
+python-versions = "*"
+files = [
+    {file = "subword_nmt-0.3.8-py3-none-any.whl", hash = "sha256:d22526b557752f35ac15e8ea384ea7773e50a51d966b8752d023d16cb87eac36"},
+    {file = "subword_nmt-0.3.8.tar.gz", hash = "sha256:3964c66b37712ca1d9fb9a1a6ff7e57c9ab72d838813da3e9a1d4d4997f4fb75"},
+]
+
+[package.dependencies]
+mock = "*"
+tqdm = "*"
+
+[[package]]
 name = "sympy"
 version = "1.12"
 description = "Computer algebra system (CAS) in Python"
@@ -4868,4 +4899,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "42fdb9ac2c5df842e4e66a741038ab984399f67045dc4d457be2970337773c6b"
+content-hash = "71bd978912b86e58bc7ef9ae001e6f2b0b2b45dee5ff9156f47b696e36ff8f1a"

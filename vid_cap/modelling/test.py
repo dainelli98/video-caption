@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """Function to test models."""
-
 import numpy as np
 import pandas as pd
 import torch
 import tqdm
 from loguru import logger
-from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from torcheval.metrics.functional.text import bleu_score
 
+from . import _utils as utils
 from .model import TransformerNet
 
 
@@ -19,6 +18,7 @@ def test_model(
     data_captions: pd.DataFrame,
     vocab: dict[str, int],
     device: torch.device,
+    use_bpe: bool = False,
 ) -> float:
     """Test the model.
 
@@ -27,6 +27,7 @@ def test_model(
     :param data_captions: Data Captions.
     :param vocab: Vocabulary.
     :param device: Device to use.
+    :param use_bpe: Whether to use BPE.
     :return: Test loss and BLEU score.
     """
     model.eval()
@@ -45,7 +46,9 @@ def test_model(
             for vid_id in vid_ids:
                 vid_id = vid_id.item()
                 targets = [
-                    _convert_tensor_to_caption(_convert_tokens_to_ids(cap, vocab), id2word)
+                    utils.convert_tensor_to_caption(
+                        utils.convert_tokens_to_ids(cap, vocab), id2word, use_bpe
+                    )
                     for cap in data_captions[data_captions["video"] == vid_id]["caption"]
                 ]
 
@@ -64,7 +67,9 @@ def test_model(
                 captions[:, t] = next_word_logits.argmax(-1)
 
             [
-                decoded_predictions.append(_convert_tensor_to_caption(output, id2word))
+                decoded_predictions.append(
+                    utils.convert_tensor_to_caption(output, id2word, use_bpe)
+                )
                 for output in captions
             ]
 
@@ -73,48 +78,7 @@ def test_model(
     logger.info("Test BLEU score: {}", score)
 
     for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
-        logger.info("Trgt: {}", decoded_targets[example_idx][:2])
+        logger.info("Trgt: {}", decoded_targets[example_idx][:5])
         logger.info("Pred: {}", decoded_predictions[example_idx])
 
     return score
-
-
-def _convert_captions_to_tensor(
-    captions: list[str], vocab: dict[str, int]
-) -> tuple[torch.Tensor, torch.Tensor]:
-    padded_captions_str = pad_sequence(
-        [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions],
-        batch_first=True,
-    )
-
-    padded_captions_end = pad_sequence(
-        [torch.tensor(_convert_tokens_to_ids(tokens + " <eos>", vocab)) for tokens in captions],
-        batch_first=True,
-    )
-
-    return padded_captions_str, padded_captions_end
-
-
-def _convert_tokens_to_ids(tokens: str, vocab: dict[str, int]) -> list[int]:
-    return [vocab.get(token, 1) for token in tokens.split()]
-
-
-def _convert_tensor_to_caption(
-    caption_indices: torch.Tensor | list[int], id2word: dict[int, str]
-) -> str:
-    """Decode a caption from token indices to words using the vocabulary.
-
-    :param caption_indices: Tensor of token indices representing a caption.
-    :param id2word: Dictionary mapping token indices to words.
-    :return: Decoded caption as a string.
-    """
-    if isinstance(caption_indices, torch.Tensor):
-        caption_indices = caption_indices.cpu().numpy()
-    words = [id2word.get(idx_, "<unk>") for idx_ in caption_indices]
-
-    if "<eos>" in words:
-        words = words[: words.index("<eos>")]
-
-    words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
-
-    return " ".join(words)

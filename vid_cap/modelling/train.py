@@ -17,6 +17,7 @@ from vid_cap.modelling.scheduler import NoamOptimizer
 from vid_cap.utils.early_stopper import EarlyStopper
 from vid_cap.utils.model_saver import ModelSaver
 
+from . import _utils as utils
 from .model import TransformerNet
 
 _LOSS_FN = torch.nn.modules.loss._Loss  # noqa: SLF001
@@ -34,6 +35,7 @@ def train(
     output_dir: Path,
     tb_writer: SummaryWriter | None = None,
     label_smoothing: float = 0.0,
+    use_bpe: bool = False,
 ) -> tuple[TransformerNet, list[float], list[float], list[float], list[float]]:
     """Train model.
 
@@ -48,6 +50,7 @@ def train(
     :param output_dir: Output directory.
     :param tb_writer: Tensorboard writer.
     :param label_smoothing: Label smoothing. Defaults to ``0.0``.
+    :param use_bpe: Whether to use BPE. Defaults to ``False``.
     :return: Trained model and metrics.
     """
     early_stopper = EarlyStopper(patience=2, min_delta=0)
@@ -72,12 +75,22 @@ def train(
             device,
             tb_writer,
             label_smoothing,
+            use_bpe,
         )
         train_losses.append(train_loss)
 
         logger.info("End of epoch {}/{}. Train loss: {}", epoch + 1, num_epochs, train_loss)
         val_loss, bleu = _validate_one_epoch(
-            model, valid_loader, vocab, id2word, loss_fn, epoch, device, tb_writer, label_smoothing
+            model,
+            valid_loader,
+            vocab,
+            id2word,
+            loss_fn,
+            epoch,
+            device,
+            tb_writer,
+            label_smoothing,
+            use_bpe,
         )
 
         val_losses.append(val_loss)
@@ -106,6 +119,7 @@ def _train_one_epoch(
     device: torch.device,
     tb_writer: SummaryWriter | None,
     label_smoothing: float = 0.0,
+    use_bpe: bool = False,
 ) -> float:
     """Train one epoch.
 
@@ -118,6 +132,8 @@ def _train_one_epoch(
     :param epoch: Epoch number.
     :param device: Device to use.
     :param tb_writer: Tensorboard writer. Defaults to ``None``.
+    :param label_smoothing: Label smoothing. Defaults to ``0.0``.
+    :param use_bpe: Whether to use BPE. Defaults to ``False``.
     :return: Loss.
     """
     model.train()
@@ -150,12 +166,14 @@ def _train_one_epoch(
 
     loss = running_loss / len(training_loader)
 
-    decoded_targets = [_convert_tensor_to_caption(caption, id2word) for caption in captions_end]
+    decoded_targets = [
+        utils.convert_tensor_to_caption(caption, id2word, use_bpe) for caption in captions_end
+    ]
 
     outputs_normalized = torch.argmax(outputs, dim=2)
 
     decoded_predictions = [
-        _convert_tensor_to_caption(output, id2word) for output in outputs_normalized
+        utils.convert_tensor_to_caption(output, id2word, use_bpe) for output in outputs_normalized
     ]
 
     for example_idx in np.random.default_rng().integers(0, len(decoded_predictions), 5):
@@ -178,6 +196,7 @@ def _validate_one_epoch(
     device: torch.device,
     tb_writer: SummaryWriter | None,
     label_smoothing: float = 0.0,
+    use_bpe: bool = False,
 ) -> tuple[float, float]:
     """Validate one epoch.
 
@@ -190,6 +209,7 @@ def _validate_one_epoch(
     :param device: Device to use.
     :param tb_writer: Tensorboard writer. Defaults to ``None``.
     :param label_smoothing: Label smoothing. Defaults to ``0.0``.
+    :param use_bpe: Whether to use BPE. Defaults to ``False``.
     :return: Validation loss and accuracy.
     """
     model.eval()
@@ -221,13 +241,15 @@ def _validate_one_epoch(
 
             # Compute BLEU score
             [
-                decoded_targets.append(_convert_tensor_to_caption(caption, id2word))
+                decoded_targets.append(utils.convert_tensor_to_caption(caption, id2word, use_bpe))
                 for caption in captions_end
             ]
             outputs_normalized = torch.argmax(outputs, dim=2)
 
             [
-                decoded_predictions.append(_convert_tensor_to_caption(output, id2word))
+                decoded_predictions.append(
+                    utils.convert_tensor_to_caption(output, id2word, use_bpe)
+                )
                 for output in outputs_normalized
             ]
 
@@ -251,36 +273,29 @@ def _validate_one_epoch(
 def _convert_captions_to_tensor(
     captions: list[str], vocab: dict[str, int]
 ) -> tuple[torch.Tensor, torch.Tensor]:
+    """Convert a list of captions to a tensor.
+
+    :param captions: List of captions.
+    :param vocab: Vocabulary.
+    :return: Padded captions.
+    """
     padded_captions_str = pad_sequence(
-        [torch.tensor(_convert_tokens_to_ids("<sos> " + tokens, vocab)) for tokens in captions],
+        [
+            torch.tensor(utils.convert_tokens_to_ids("<sos> " + tokens, vocab))
+            for tokens in captions
+        ],
         batch_first=True,
     )
 
     padded_captions_end = pad_sequence(
-        [torch.tensor(_convert_tokens_to_ids(tokens + " <eos>", vocab)) for tokens in captions],
+        [
+            torch.tensor(utils.convert_tokens_to_ids(tokens + " <eos>", vocab))
+            for tokens in captions
+        ],
         batch_first=True,
     )
 
     return padded_captions_str, padded_captions_end
-
-
-def _convert_tokens_to_ids(tokens: str, vocab: dict[str, int]) -> list[int]:
-    return [vocab.get(token, 1) for token in tokens.split()]
-
-
-def _convert_tensor_to_caption(caption_indices: torch.Tensor, id2word: dict[int, str]) -> str:
-    """Decode a caption from token indices to words using the vocabulary.
-
-    :param caption_indices: Tensor of token indices representing a caption.
-    :param id2word: Dictionary mapping token indices to words.
-    :return: Decoded caption as a string.
-    """
-    caption_indices = caption_indices.cpu().numpy()
-    words = [id2word.get(idx_, "<unk>") for idx_ in caption_indices]
-
-    words = [word for word in words if word not in ["<sos>", "<eos>", "<pad>"]]
-
-    return " ".join(words)
 
 
 def _smooth_labels(y: torch.Tensor, smooth_factor: float) -> torch.Tensor:
