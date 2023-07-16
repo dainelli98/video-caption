@@ -6,6 +6,8 @@
         "experiment",
         "--use-gpu",
         "--caps-per-vid",
+        "2",
+        "--n-heads",
         "4",
         "--n-layers",
         "2",
@@ -15,7 +17,9 @@
         "--batch-size",
         "100",
         "--bpe-num-operations",
-        "5000"
+        "500",
+        "--epochs",
+        "50"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
@@ -32,7 +36,26 @@
       "name": "Prepare dataset",
       "request": "launch",
       "type": "python"
-    }
+    },
+    {
+      "args": [
+        "test",
+        "--use-gpu",
+        "--n-heads",
+        "4",
+        "--n-layers",
+        "2",
+        "--batch-size",
+        "64",
+        "--experiment-number",
+        "20230715200216",
+      ],
+      "justMyCode": true,
+      "module": "vid_cap.__main__",
+      "name": "Test",
+      "request": "launch",
+      "type": "python"
+    },
   ],
   "version": "0.2.0"
 }
