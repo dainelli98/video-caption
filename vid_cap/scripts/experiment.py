@@ -200,7 +200,7 @@ def main(
 
     joblib.dump(train_dataset.vocab, out_dir / "vocab.pkl")
     if use_bpe:
-        shutil.copyfile(train_dataset.bpe_codes_file, out_dir / "bpe_codes.txt")
+        shutil.copyfile(train_dataset.bpe_codes_file, out_dir / "bpe_codes.codes")
 
     loss_plot.plot_and_store_graphs(train_loss, val_loss, bleu_scores, lrs, out_dir)
 
