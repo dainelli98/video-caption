@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Script to test decoder."""
-import os
 import platform
 from pathlib import Path
 
@@ -55,7 +54,9 @@ def main(
     """
     experiment_folder_path: Path = data_dir / "output" / experiment_number
     model_path: Path = experiment_folder_path / "model"
-    use_bpe = os.path.isfile(experiment_folder_path / "bpe.codes")
+    use_bpe = (experiment_folder_path / "bpe.codes").exists() and (
+        experiment_folder_path / "bpe.codes"
+    ).is_file()
 
     gpu_model = "cpu"
 
