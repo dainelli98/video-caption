@@ -329,7 +329,7 @@ Also, the videos can be found already extracted from YouTube in [Mediafire](http
 ### Data splits
 
 | Splits | Init     | End      | # Videos | # Captions/Video |
-|--------|----------|----------|----------|------------------|
+|-------:|---------:|---------:|---------:|-----------------:|
 | Train  | video0   | video6512| 6513     | 20               |
 | Val    | video6513| video7009| 497      | 20               |
 | Test   | video7010| video9999| 2990     | 20               |
@@ -394,15 +394,15 @@ The table below provides a summary of the generated datasets:
 
 - No-sampling datasets: These datasets were generated with a video frame rate of 27 frames/sec. The tensor representation for each video is [1,1568,768] with int64 type, and the overall size of the dataset is 41.50 GB. The dataset is saved under the name "dataset".
 
-| Embedding sampling period (pick one vector every X) | Embed dims/video | Tensor Dtype | Dataset Size |
-| --------------------------------------------------- | ---------------- | ------------ | ------------ |
-| No-sampling                                         | (1,1568,768)     | float32      | 41.50 GB     |
-| No-sampling                                         | (1,1568,768)     | float16      | 20.74 GB     |
-| 2                                                   | (1,784,768)      | float16      | 10.38 GB     |
-| 4                                                   | (1,392,768)      | float16      | 10.13 GB     |
-| 8                                                   | (1,196,768)      | float16      | 2.6 GB       |
-| 16                                                  | (1,98,768)       | float16      | 1.3 GB       |
-| 32                                                  | (1,49,768)       | float16      | 645 MB       |
+| Embedding sampling period (pick one vector every X) | Embed dims/video | Tensor type | Dataset Size |
+| ---------------------------------------------------:| ----------------:| -----------:| ------------:|
+| No-sampling                                         | (1,1568,768)     | float32     | 41.50 GB     |
+| No-sampling                                         | (1,1568,768)     | float16     | 20.74 GB     |
+| 2                                                   | (1,784,768)      | float16     | 10.38 GB     |
+| 4                                                   | (1,392,768)      | float16     | 10.13 GB     |
+| 8                                                   | (1,196,768)      | float16     | 2.6 GB       |
+| 16                                                  | (1,98,768)       | float16     | 1.3 GB       |
+| 32                                                  | (1,49,768)       | float16     | 645 MB       |
 
 ### Transformer Decoder
 
