@@ -89,10 +89,11 @@ make docs
 ## Running the project
 
 This projects provides 4 commands that can be run and configured usign CLI:
- - ``prepare-dataset``
- - ``train``
- - ``test``
- - ``experiment``
+
+- ``prepare-dataset``
+- ``train``
+- ``test``
+- ``experiment``
 
 To get information about the arguments that each command accepts, run:
 
