@@ -34,7 +34,7 @@ class VideoEvalDataset(Dataset):
     _captions: pd.DataFrame
 
     def __init__(
-        self, video_dir: Path | str, caps_file: Path | str, bpe_codes_file: Path | None
+        self, video_dir: Path | str, caps_file: Path | str
     ) -> None:
         if not isinstance(video_dir, Path):
             video_dir = Path(video_dir)
@@ -43,14 +43,6 @@ class VideoEvalDataset(Dataset):
             caps_file = Path(caps_file)
 
         self._captions = pd.read_parquet(caps_file, dtype_backend="pyarrow")
-
-        if bpe_codes_file is not None:
-            bpe = BPE(bpe_codes_file.open(encoding="utf-8"))
-            for idx, row in tqdm.tqdm(
-                self._captions.iterrows(), "Processing test captions with BPE codes"
-            ):
-                encoded_line = bpe.process_line(row["caption"])
-                self._captions.at[idx, "caption"] = encoded_line
 
         self._data = [
             (torch.tensor(np.load(video_dir / f"{video}.npy"), dtype=torch.float16), video)
