@@ -439,7 +439,7 @@ After the initial stages of the project, we identifyed several questions that we
 
 - Is it possible to obtain a model that can generate a caption for a video with at least some information about the content of the video usign a VideoMAE generated embedding?
 - Can we obtain a model that can generate a caption for a video usign embeddings with reduced precision and information (reduced sampling)?
-- Which hyperparameters can be provided to the model to obtain the best results?
+- Which hyperparameters can be provided to the model, training and input data to obtain the best results?
 
 ### Experiment definition
 
@@ -455,24 +455,108 @@ To perform the experiments we used the ``experiment`` script providing several p
 - Input data:
   - Encoded data: The VideoMAE generated embeddings. We tested with different sampling values.
   - Captions per video: Number of captions per video to use in training and validation.
+  - Vocabulary size: Number of words in the vocabulary.
 - Model hyperparameters:
   - Number of heads: Number of heads in the multi-head attention layers.
   - Number of layers: Number of layers Transformer decoder of the model.
 - Training hyperparameters:
   - Batch size: Number of samples per batch.
-  - Shuffle: Whether to shuffle the dataset or not.
+  - Shuffle: Whether to shuffle the training dataset or not.
   - Label smoothing: Label smoothing value.
   - Dropout: Dropout value.
-  - Embeddings: Embedding size.
   - Warmup steps: Number of warmup steps.
 
 ### Experimental process
 
-**TODO:**
+#### 1. Finding starting point
+
+Our first step was to find a starting point for the experiments. We trained models with several combinations of parameters and inputs to find a model that showed a minimum of performance with the validation dataset.
+
+We have to point out that arriving at a point were we observed minimal performance was not easy. We had to look at many details and add several optimizations and techniques to the model and the training process that we did not expect at the begging.
+
+This caused a delay added to the fact that we found out that we did not have a big need of computational power to train and evaluate the models, made us decide to not try to train and deploy the model in the cloud, so that we could dedicate more time to experimentation.
+
+We think this was worth, as in the results section we will see that we were able to obtain a model that can generate captions for videos with some information about the content of the video of sufficent quality.
+
+#### 2. Finding best training hyperparameters
+
+The second step we made was to find the best training hyperparameters for the model. We used the model parameters with the best performance in the previous step (2 heads and 2 layers) and a small encoding dataset that provided enough performance (1 sample for each 16 embedding vectors) with two captions per training video with a vocabulary of 8000 words, and trained models with different training hyperparameter combinations from the following values for each:
+
+- Batch size: 32, 64, 100
+- Shuffle: Whether True, False
+- Label smoothing: 0, 0.1, 0.2
+- Dropout: 0.0, 0.1, 0.2
+- Warmup steps: 2000, 4000, 6000
+
+The best parameters were selected based on the test BLEU score are:
+
+- Batch size: 64
+- Shuffle: True
+- Label smoothing: 0.1
+- Dropout: 0.1
+- Warmup steps: 6000
+
+#### 3. Finding best model hyperparameters
+
+Once the training hyperparameters were defined we proceeded to find the best model hyperparameters.
+
+##### 3.1 Number of heads
+
+First we iterated over the number of heads in the multi-head attention layers with the number of transformer decoder layers set to 2.
+
+The values tested were: 2, 3, 4, 6, 8.
+
+The best number of heads was 4.
+
+##### 3.2 Number of layers
+
+Then we iterated over the number of transformer decoder layers with the number of heads set to 4.
+
+The values tested were: 2, 3, 4, 6, 10.
+
+The best number of layers was 2.
+
+#### 4. Finding best input data
+
+Once the best model and training hyperparameters were found we proceeded to find the best input data for the model.
+
+#### 4.1 Captions per video
+
+We iterated though differents amounts of captions per video in training and validation dataset: 1, 2, 3, 4, 5, 8, 10, 15, 20.
+
+The best number of captions per video was 10.
+
+#### 4.2 Vocabulary size
+
+We iterated though differents vocabulary sizes: 6000, 8000, 12000, 100% train coverage.
+
+The best vocabulary size was 10000.
+
+We discarded usign 8000 because the amount of words in the vocabulary was not enough to avoiid having too many ``<unk>`` tokens in the captions.
+
+Also we decided that the improvement we could get by increasing the vocabulary size so that train coverage was 100% was not worth.
+
+#### 4.3 Embeddings
+
+Finally we iterated though differents embedding sampling values: 2, 4, 8, 16, 32.
+
+The best embedding sampling value was 16.
 
 ## Results
 
-**TODO**
+### Results Summary
+
+After the prior experiments we are able to provide several insights about the model and the effect of the different parameters and inputs on the model performance.
+
+Also we can look at the wrong behaviors that we observed.
+
+#### Best model
+
+**TODO:**
+
+#### Wrong berhaivors
+
+**TODO:**
 
 ### Extended results
 
@@ -534,15 +618,53 @@ The following table contains the most relevant experiments performed with the mo
 |           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       3.4094 |            5.6264 |            0      |
 |          100 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       3.7105 |            6.1041 |            0      |
 
-### Results Summary
-
-**TODO:** Summary of results
-
 ## Conclusions
+
+### Could we obtain a good video caption generator?
+
+Yes, we were able to obtain a good video caption generator. We were able to obtain a model that is able to generate a caption for a video with a good accuracy and considerable coherence.
+
+### Could we leverage reduced embbendings?
+
+The results show that the precision reduction did not make impossible to obtain a good model. We were able to obtain a good model with a reduced precision of 16 bits.
+
+Also the subsampling of the video embeddings did not make impossible to obtain a good model. We were able to obtain a good model with a subsampling and in the end we obtained better results using one of each 16 vectors from the embeddings than using greater granularities.
+
+### Better parameters
+
+The results show that from the pool of parameter combinations that we tried the ones we determined as the best are:
+
+- Input data:
+  - Encoded data: 16-bit float with subsampling of 1/16.
+  - Captions per video: 10
+  - Vocabulary size: 10000
+- Model hyperparameters:
+  - Number of heads: 4
+  - Number of layers: 2
+- Training hyperparameters:
+  - Batch size: 64
+  - Shuffle: True
+  - Label smoothing: 0.1
+  - Dropout: 0.1
+  - Warmup steps: 6000
 
 **TODO:**
 
 ## Next Steps
+
+We identify some opportunities for future work.
+
+### Deploy as an application on the cloud
+
+Even if in the end we prioritized other aspects and we did not have time to deploy on the cloud, we think that it would be possible to build a framework were any 30 second video could be provided and the model would return a summary of the video.
+
+The abovementioned framework could be deployed as an application accessible through an API.
+
+### Fine-tune the model encoder
+
+Even we wanted to use a fully pretrained model, and we were able to obtain good enough results with it, we think that it would be woth exploring if it is possible to obtain better results if we fine-tune the model encoder retraining it with de decoder and our training data.
+
+This toguether with the previous point may enable us to train with the full embbedings and bigger model architectures. Though it may be unnecesary given that we are already obtaining good results.
 
 **TODO:**
 
