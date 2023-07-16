@@ -36,7 +36,7 @@ def main(
     video_path:str,
     inference_model:str,
     inference_model_vocab:str
-) -> None:
+) -> list[str]:
 
     
     model_path: Path = inference_model
@@ -84,10 +84,12 @@ def main(
             for output in captions
         ]
         print(test)
+    
+    return test
 
 def load_video(video_path: Path) -> np.ndarray:
     
-    feat_vec = pre.gen_feat_vecs(video_path, 16)[0, :, :]
+    feat_vec = pre.gen_feat_vecs(video_path, 16, True)[0, :, :]
     feat_vec = feat_vec[::_SAMPLE_PERIOD, :]
     feat_vec = feat_vec.astype(np.float16)
     return feat_vec

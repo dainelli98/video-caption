@@ -24,7 +24,7 @@ ENCODER: VideoMAEModel = _ENC_MODEL.videomae
 __all__: list[str] = ["gen_feat_vecs", "get_video_frames", "ENCODER", "IMG_PROCESSOR"]
 
 
-def gen_feat_vecs(filepaths: Path | str | Iterable[Path | str], n_frames: int, use_key_frames: bool) -> np.ndarray:
+def gen_feat_vecs(filepaths: Path | str | Iterable[Path | str], n_frames: int, use_key_frames: bool = False) -> np.ndarray:
     """Generate feature vectors from a video files.
 
     :param filepaths: Paths to the video files.

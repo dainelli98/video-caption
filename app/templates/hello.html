@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+    <title>Video Captioning</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Video caption app</h1>
+        <form id="predictForm" action="/predict" method="post">
+            <label for="review">Your video path:</label><br>
+            <textarea class="input" rows="10" cols="10" id="review" name="review" placeholder="Your video path here."></textarea>
+            <input type="submit" value="Generate caption" onclick="handleSubmit(event)">
+        </form> 
+    </div>
+
+    <!-- Loading spinner element -->
+    <div id="loadingSpinner" class="loader"></div>
+
+    <!-- Overlay element -->
+    <div id="overlay"></div>
+
+    <!-- Result text element -->
+    <div id="resultText"></div>
+
+    <script>
+        function showLoadingSpinner() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('predictForm').classList.add('loading');
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function hideLoadingSpinner() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('predictForm').classList.remove('loading');
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function showResultHTML(htmlContent) {
+            const resultTextElement = document.getElementById('resultText');
+            resultTextElement.innerHTML = `
+                <span class="closeButton" onclick="closeResultWindow()">&times;</span>
+                ${htmlContent}
+            `;
+            resultTextElement.style.display = 'block';
+        }
+
+        function closeResultWindow() {
+            const resultTextElement = document.getElementById('resultText');
+            resultTextElement.style.display = 'none';
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault(); // Prevent the form from submitting normally
+
+            // Get the form data
+            const formData = new FormData(document.getElementById('predictForm'));
+
+            // Show the loading spinner and overlay
+            showLoadingSpinner();
+
+            // Make an asynchronous request to the server
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                // Hide the loading spinner and overlay
+                hideLoadingSpinner();
+
+                // Handle the response from the server
+                if (response.ok) {
+                    // Display the result on the page as HTML
+                    response.text().then(result => {
+                        showResultHTML(result);
+                    });
+                } else {
+                    // Handle errors or display an error message
+                    console.error('Error:', response.statusText);
+                }
+            })
+            .catch(error => {
+                // Handle fetch errors
+                console.error('Fetch Error:', error);
+
+                // Hide the loading spinner and overlay in case of an error
+                hideLoadingSpinner();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,14 @@
 {
   "configurations": [
     {
+      "name": "App",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
       "args": [
         "inference",
         "--use-gpu",
@@ -9,12 +17,11 @@
         "--n-layers",
         "2",
         "--video-path",
-        "/Users/juanbacardit/Src/UPC/video-caption/models/inference/video.mp4",
+        "C:/Users/joanh/Downloads/video.mp4",
         "--inference-model",
-        "models/inference/model",
+        "C:/Users/joanh/Downloads/model",
         "--inference-model-vocab",
-        "models/inference/vocab.pkl"
-    
+        "C:/Users/joanh/Downloads/vocab.pkl"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
@@ -39,7 +46,12 @@
         "64",
         "--epochs",
         "50",
-        "--dropout", "0.1", "--warmup-steps", "6000", "--label-smoothing", "0.1"
+        "--dropout",
+        "0.1",
+        "--warmup-steps",
+        "6000",
+        "--label-smoothing",
+        "0.1"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",
