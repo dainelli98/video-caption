@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Script to test decoder."""
+import os
 import platform
 from pathlib import Path
 
@@ -21,30 +22,19 @@ _MAX_TGT_LEN = 100
 @click.option("--n-heads", default=8, type=click.IntRange(1, 128), help="Number of heads.")
 @click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
 @click.option(
-    "--model-path", required=True, type=click.Path(exists=True), help="Path to trained model"
-)
-@click.option(
-    "--vocab-path", required=True, type=click.Path(exists=True), help="Path to vocabulary file"
-)
-@click.option(
-    "--bpe-codes-path",
-    type=click.Path(exists=True),
-    help="Path bpe codes file. If not provided, BPE will not be used.",
-)
-@click.option(
     "--n-layers", default=4, type=click.IntRange(1, 128), help="Number of decoder layers."
 )
 @click.option("--batch-size", default=64, type=click.IntRange(1, 512), help="Batch size.")
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to test with GPU")
+@click.option("--experiment-number", required=True, type=str, help="Number timestamp name on experiment folder.")
+
 def main(
     n_heads: int,
     data_dir: Path,
-    model_path: Path,
-    vocab_path: Path,
     n_layers: int,
     batch_size: int,
     use_gpu: bool,
-    bpe_codes_path: Path | None,
+    experiment_number: str
 ) -> None:
     """Test decoder.
 
@@ -59,7 +49,9 @@ def main(
     :param use_gpu: Whether to try to use GPU.
     :param bpe_codes_path: Path to bpe codes file. If not provided, BPE will not be used.
     """
-    use_bpe = bpe_codes_path is not None
+    experiment_folder_path: Path = data_dir / "output" / experiment_number
+    model_path: Path = experiment_folder_path / "model"
+    use_bpe = os.path.isfile(experiment_folder_path / "bpe.codes")
 
     gpu_model = "cpu"
 
@@ -73,12 +65,11 @@ def main(
 
     logger.info(f"Testing with device : {device}")
 
-    vocab = joblib.load(vocab_path)
+    vocab = joblib.load(experiment_folder_path / "vocab.pkl")
 
     test_dataset = VideoEvalDataset(
         data_dir / "test" / "videos",
         data_dir / "test" / "captions.parquet",
-        bpe_codes_file=bpe_codes_path,
     )
 
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)

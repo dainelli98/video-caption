@@ -143,7 +143,6 @@ def main(
     test_dataset = VideoEvalDataset(
         data_dir / "test" / "videos",
         data_dir / "test" / "captions.parquet",
-        train_dataset.bpe_codes_file,
     )
 
     hparams = {
