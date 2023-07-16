@@ -191,11 +191,11 @@ class VideoFeatDataset(Dataset):
         """
         captions = self._captions["caption"].to_list()
 
-        if bpe_num_operations is None and vocab_len is None:
+        if bpe_num_operations is None and vocab_len is not None:
             words = [word for caption in captions for word in caption.split()]
             self._vocab = self.build_vocab_without_bpe(vocab_len, words)
             self._bpe_codes_file = None
-        else:
+        elif bpe_num_operations is not None:
             self._vocab = self.build_vocab_with_bpe(bpe_dir, bpe_num_operations)
 
         logger.info("Vocabulary has {} unique words", len(self._vocab))
