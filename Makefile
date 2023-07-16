@@ -86,7 +86,7 @@ clean-test: ## Remove test, coverage and linting artifacts
 clean-docs: ## Remove files with make docs
 	rm -f docs/source/modules.rst
 	rm -f docs/source/vid_cap*.rst
-	rm -f docs/source/readme.md docs/source/release_notes.md
+	rm -f docs/source/release_notes.md
 	rm -rf docs/build
 
 clean-data: ## Remove files within data/out
@@ -128,10 +128,8 @@ docs: ## Generate Sphinx HTML documentation, including API docs
 	rm -f docs/source/vid_cap*.rst
 	rm -f docs/source/modules.rst
 	rm -rf docs/build
-	rm -f docs/source/readme.md
 	rm -f docs/source/release_notes.md
 	sphinx-apidoc -o docs/source vid_cap
-	cp README.md docs/source/readme.md
 	cp RELEASE_NOTES.md docs/source/release_notes.md
 	sphinx-build -b html -c docs/source -W docs/source docs/build/html -D autodoc_member_order="bysource"
 
