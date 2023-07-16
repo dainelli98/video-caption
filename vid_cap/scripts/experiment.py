@@ -98,6 +98,9 @@ def main(
         shutil.rmtree(bpe_dir, ignore_errors=True)
         bpe_dir.mkdir(exist_ok=True, parents=True)
 
+    else:
+        bpe_dir = None
+
     torch.manual_seed(_SEED)
     np.random.seed(_SEED)
     random.seed(_SEED)
