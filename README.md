@@ -435,10 +435,10 @@ With the model implementation finished we proceeded to perform several experimen
 
 ### Questions to answer
 
-After the initial stages of the project, we identifyed several questions that we wanted to answer with the experiments:
+After the initial stages of the project, we identified several questions that we wanted to answer with the experiments:
 
-- Is it possible to obtain a model that can generate a caption for a video with at least some information about the content of the video usign a VideoMAE generated embedding?
-- Can we obtain a model that can generate a caption for a video usign embeddings with reduced precision and information (reduced sampling)?
+- Is it possible to obtain a model that can generate a caption for a video with at least some information about the content of the video using a VideoMAE generated embedding?
+- Can we obtain a model that can generate a caption for a video using embeddings with reduced precision and information (reduced sampling)?
 - Which hyperparameters can be provided to the model, training and input data to obtain the best results?
 
 ### Experiment definition
@@ -450,7 +450,7 @@ We implemented 3 different scripts to perform the experiments:
 
 All scripts can be observed with ``Tensorboard``.
 
-To perform the experiments we used the ``experiment`` script providing several paramerter combinations. The parameters used for the experiments are the following:
+To perform the experiments we used the ``experiment`` script providing several parameter combinations. The parameters used for the experiments are the following:
 
 - Input data:
   - Encoded data: The VideoMAE generated embeddings. We tested with different sampling values.
@@ -624,11 +624,11 @@ The following table contains the most relevant experiments performed with the mo
 
 Yes, we were able to obtain a good video caption generator. We were able to obtain a model that is able to generate a caption for a video with a good accuracy and considerable coherence.
 
-### Could we leverage reduced embbendings?
+### Could we leverage reduced embeddings?
 
-The results show that the precision reduction did not make impossible to obtain a good model. We were able to obtain a good model with a reduced precision of 16 bits.
+The results show that the precision reduction did not make it impossible to obtain a good model. We were able to obtain a good model with a reduced precision of 16 bits.
 
-Also the subsampling of the video embeddings did not make impossible to obtain a good model. We were able to obtain a good model with a subsampling and in the end we obtained better results using one of each 16 vectors from the embeddings than using greater granularities.
+Also, the subsampling of the video embeddings allowed us to obtain a good model. We were able to obtain a good model with a subsampling and in the end we obtained better results using one of each 16 vectors from the embeddings than using greater granularity.
 
 ### Better parameters
 
@@ -656,15 +656,15 @@ We identify some opportunities for future work.
 
 ### Deploy as an application on the cloud
 
-Even if in the end we prioritized other aspects and we did not have time to deploy on the cloud, we think that it would be possible to build a framework were any 30 second video could be provided and the model would return a summary of the video.
+Even if in the end we prioritized other aspects and we did not have time to deploy on the cloud, we think that it would be possible to build a framework where any 30-second video could be provided and the model would return a summary of the video.
 
 The abovementioned framework could be deployed as an application accessible through an API.
 
 ### Fine-tune the model encoder
 
-Even we wanted to use a fully pretrained model, and we were able to obtain good enough results with it, we think that it would be woth exploring if it is possible to obtain better results if we fine-tune the model encoder retraining it with de decoder and our training data.
+Even we wanted to use a fully pretrained model, and we were able to obtain good enough results with it, we think that it would be worth exploring if it is possible to obtain better results if we fine-tune the model encoder retraining it with de decoder and our training data.
 
-This toguether with the previous point may enable us to train with the full embbedings and bigger model architectures. Though it may be unnecesary given that we are already obtaining good results.
+This together with the previous point may enable us to train with the full embeddings and bigger model architectures. Though it may be unnecessary given that we are already obtaining good results.
 
 **TODO:**
 
