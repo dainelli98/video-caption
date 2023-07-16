@@ -1,4 +1,4 @@
-.PHONY: help venv clean clean-build clean-pyc clean-test clean-docs clean-data lint tests tests-basic tests-metrics cov cov-basic docs dist install jupyter pre-commit format cruft
+.PHONY: help venv clean clean-build clean-pyc clean-test clean-docs clean-data lint docs dist install jupyter pre-commit format cruft
 .DEFAULT_GOAL := help
 
 .SILENT: clean-build clean-pyc clean-test clean-docs clean-data clean-rej
@@ -101,28 +101,7 @@ dist: clean ## Build wheel
 	ls -l dist
 
 lint: ## Check style with ruff
-	ruff --fix vid_cap tests
-
-tests: ## Run all tests
-	pytest -v -n auto --dist loadscope tests/unit tests/integration tests/e2e
-
-tests-basic: ## Run unit tests, integration tests and doctest
-	pytest -v -n auto --dist loadscope tests/unit tests/integration
-
-tests-e2e: ## Run unit tests, integration tests and doctest
-	pytest -v -n auto --dist loadscope tests/e2e
-
-cov: ## Check code coverage
-	coverage run --source vid_cap -m pytest tests/unit tests/integration tests/e2e --junit-xml=test_result.xml
-	coverage report -m
-	coverage html
-	coverage xml
-
-cov-basic: ## Check unit tests and integration tests code coverage
-	coverage run --omit=vid_cap/scripts/*,*/__init__.py,vid_cap/__main__.py --source vid_cap -m pytest tests/unit tests/integration --junit-xml=test_result.xml
-	coverage report -m
-	coverage html
-	coverage xml
+	ruff --fix vid_cap
 
 docs: ## Generate Sphinx HTML documentation, including API docs
 	rm -f docs/source/vid_cap*.rst
