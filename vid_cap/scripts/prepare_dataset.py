@@ -22,7 +22,7 @@ _SAMPLE_PERIOD = 32
     help="Data directory",
 )
 def main(data_dir: Path) -> None:
-    """Prepare dataset with ``VideoMAE``.
+    """Prepare dataset with VideoMAE.
 
     \f
 
