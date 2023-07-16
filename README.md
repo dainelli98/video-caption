@@ -32,7 +32,6 @@ Generate a representative brief description of a small video by:
 - Implement transformer decoder to generate captions.
 - Train a transformer decoder to generate captions explaining the video content.
 - Achieve valid and accurate captions explaining what happens in a given video input.
-- Deploy built solution on Google Cloud (revised)
 
 ## Environment Setup
 
@@ -87,6 +86,154 @@ Run the following command to generate project API documentation:
 
 ```shell
 make docs
+```
+
+## Running the project
+
+This projects provides 4 commands that can be run and configured usign CLI:
+ - ``prepare-dataset``
+ - ``train``
+ - ``test``
+ - ``experiment``
+
+To get information about the arguments that each command accepts, run:
+
+```shell
+vid-cap --help
+
+Usage: vid-cap [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
+
+  Train and evaluate model to obtain video descriptions from videos.
+
+Options:
+  --version  Show the version and exit.
+  --help     Show this message and exit.
+```
+
+### Prepare dataset
+
+To run the script that prepares the video encoding dataset, run:
+
+```shell
+vid-cap prepare-dataset
+```
+
+To obtain information about the arguments that this command accepts, run:
+
+```shell
+vid-cap prepare-dataset --help
+
+Usage: vid-cap prepare-dataset [OPTIONS]
+
+  Prepare dataset with VideoMAE.
+
+Options:
+  --data-dir PATH  Data directory
+  --help           Show this message and exit.
+```
+
+### Train
+
+To run the script to train the model, run:
+
+```shell
+vid-cap train
+```
+
+To obtain information about the arguments that this command accepts, run:
+
+```shell
+vid-cap train --help
+
+Usage: vid-cap train [OPTIONS]
+
+  Train decoder.
+
+Options:
+  --warmup-steps INTEGER RANGE    Warmup steps.  [1<=x<=100000]
+  --label-smoothing FLOAT RANGE   Label smoothing.  [0<=x<=1]
+  --data-dir PATH                 Data directory
+  --shuffle                       Shuffle datasets
+  --batch-size INTEGER RANGE      Batch size.  [1<=x<=512]
+  --n-heads INTEGER RANGE         Number of heads.  [1<=x<=128]
+  --n-layers INTEGER RANGE        Number of decoder layers.  [1<=x<=128]
+  --use-gpu                       Try to train with GPU
+  --epochs INTEGER RANGE          Number of epochs.  [1<=x<=10000]
+  --vocab-len INTEGER RANGE       Vocab length. If BPE is used, this is
+                                  ignored.  [1<=x<=100000]
+  --caps-per-vid INTEGER RANGE    Captions per video used in the dataset.
+                                  [1<=x<=20]
+  --dropout FLOAT RANGE           Dropout rate.  [0<=x<=1]
+  --bpe-num-operations INTEGER RANGE
+                                  Number of BPE operations. If not provided,
+                                  BPE will not be used.  [1<=x<=100000]
+  --help                          Show this message and exit.
+```
+
+### Test
+
+To run the script to evaluate the model, run:
+
+```shell
+vid-cap test
+```
+
+To obtain information about the arguments that this command accepts, run:
+
+```shell
+vid-cap test --help
+
+Usage: vid-cap test [OPTIONS]
+
+  Test decoder.
+
+Options:
+  --n-heads INTEGER RANGE     Number of heads.  [1<=x<=128]
+  --data-dir PATH             Data directory
+  --n-layers INTEGER RANGE    Number of decoder layers.  [1<=x<=128]
+  --batch-size INTEGER RANGE  Batch size.  [1<=x<=512]
+  --use-gpu                   Try to test with GPU
+  --experiment-number TEXT    Number timestamp name on experiment folder.
+                              [required]
+  --help                      Show this message and exit.
+```
+
+### Experiment
+
+To run the script that performs an experiment that trains and evaluates a model, run:
+
+```shell
+vid-cap experiment
+```
+
+To obtain information about the arguments that this command accepts, run:
+
+```shell
+vid-cap experiment --help
+
+Usage: vid-cap experiment [OPTIONS]
+
+  Perform experiement.
+
+Options:
+  --warmup-steps INTEGER RANGE    Warmup steps.  [1<=x<=100000]
+  --label-smoothing FLOAT RANGE   Label smoothing.  [0<=x<=1]
+  --data-dir PATH                 Data directory
+  --shuffle                       Shuffle datasets
+  --batch-size INTEGER RANGE      Batch size.  [1<=x<=512]
+  --n-heads INTEGER RANGE         Number of heads.  [1<=x<=128]
+  --n-layers INTEGER RANGE        Number of decoder layers.  [1<=x<=128]
+  --use-gpu                       Try to train with GPU
+  --epochs INTEGER RANGE          Number of epochs.  [1<=x<=10000]
+  --vocab-len INTEGER RANGE       Vocab length. If BPE is used, this is
+                                  ignored.  [1<=x<=100000]
+  --caps-per-vid INTEGER RANGE    Captions per video used in the dataset.
+                                  [1<=x<=20]
+  --dropout FLOAT RANGE           Dropout rate.  [0<=x<=1]
+  --bpe-num-operations INTEGER RANGE
+                                  Number of BPE operations. If not provided,
+                                  BPE will not be used.  [1<=x<=100000]
+  --help                          Show this message and exit.
 ```
 
 ## Dataset. MSR-VTT 10K
@@ -193,7 +340,9 @@ Also, the videos can be found already extracted from YouTube in [Mediafire](http
 
 ### Video Encoding
 
-We used the predefined distribution of the original dataset (Train:6513, Val:497 and Test:2990). In order to transform the original data set that contains videos and related captions, we decided to use an existing model as a transformer encoder in order to generate the corresponding embeddings for the videos and correlate those video embeddings with the captions.
+We used the predefined distribution of the original dataset (Train: 6513, Val: 497 and Test: 2990). In order to transform the original data set that contains videos and related captions, we decided to use an existing model as a transformer encoder in order to generate the corresponding embeddings for the videos and correlate those video embeddings with the captions.
+
+We implemented a script [prepare_dataset](./vid_cap/scripts/prepare_dataset.py) that allows to generate video encoddings with a giving sampling value.
 
 #### Frame extraction
 
@@ -249,13 +398,13 @@ The table below provides a summary of the generated datasets:
 
 | Embedding sampling period (pick one vector every X) | Embed dims/video | Tensor Dtype | Dataset Size |
 | --------------------------------------------------- | ---------------- | ------------ | ------------ |
-| No-sampling                                         | [1,1568,768]     | float32      | 41.50 GB     |
-| No-sampling                                         | [1,1568,768]     | float16      | 20.74 GB     |
-| 2                                                   | [1,784,768]      | float16      | 10.38 GB     |
-| 4                                                   | [1,392,768]      | float16      | 10.13 GB     |
-| 8                                                   | [1,196,768]      | float16      | 2.6 GB       |
-| 16                                                  | [1,98,768]       | float16      | 1.3 GB       |
-| 32                                                  | [1,49,768]       | float16      | 645 MB       |
+| No-sampling                                         | (1,1568,768)     | float32      | 41.50 GB     |
+| No-sampling                                         | (1,1568,768)     | float16      | 20.74 GB     |
+| 2                                                   | (1,784,768)      | float16      | 10.38 GB     |
+| 4                                                   | (1,392,768)      | float16      | 10.13 GB     |
+| 8                                                   | (1,196,768)      | float16      | 2.6 GB       |
+| 16                                                  | (1,98,768)       | float16      | 1.3 GB       |
+| 32                                                  | (1,49,768)       | float16      | 645 MB       |
 
 ### Transformer Decoder
 
@@ -267,15 +416,127 @@ The table below provides a summary of the generated datasets:
 
 #### General data flow
 
+**TODO:**
+
 ![General data flow](./report/images/general_flow.png)
+
+
+### Model training
+
+**TODO:**
+
+### Model evaluation
+
+**TODO:**
 
 ## Experiments
 
-- **TODO:** Experiments
+With the model implementation finished we proceeded to perform several experiments to improve the model performance as much as possible while getting answering other questions that arose in the previous steps of the process.
 
-## Results Summary
+### Questions to answer
 
-- **TODO:** Summary of results
+After the initial stages of the project, we identifyed several questions that we wanted to answer with the experiments:
+
+- Is it possible to obtain a model that can generate a caption for a video with at least some information about the content of the video usign a VideoMAE generated embedding?
+- Can we obtain a model that can generate a caption for a video usign embeddings with reduced precision and information (reduced sampling)?
+- Which hyperparameters can be provided to the model to obtain the best results?
+
+### Experiment definition
+
+We implemented 3 different scripts to perform the experiments:
+  - [train](./vid_cap/scripts/train.py): Trains a model ans saves model, training information and vocabulary.
+  - [test](./vid_cap/scripts/test.py): Loads model and vocabulary and uses test data to evaluate model performance.
+  - [experiment](./vid_cap/scripts/experiment.py): Runs train and test. At the end stores experiment information and adds it to the experiment tracking file.
+
+All scripts can be observed with ``Tensorboard``.
+
+To perform the experiments we used the ``experiment`` script providing several paramerter combinations. The parameters used for the experiments are the following:
+
+- Input data:
+  - Encoded data: The VideoMAE generated embeddings. We tested with different sampling values.
+  - Captions per video: Number of captions per video to use in training and validation.
+- Model hyperparameters:
+  - Number of heads: Number of heads in the multi-head attention layers.
+  - Number of layers: Number of layers Transformer decoder of the model.
+- Training hyperparameters:
+  - Batch size: Number of samples per batch.
+  - Shuffle: Whether to shuffle the dataset or not.
+  - Label smoothing: Label smoothing value.
+  - Dropout: Dropout value.
+  - Embeddings: Embedding size.
+  - Warmup steps: Number of warmup steps.
+
+### Experimental process
+
+**TODO:**
+
+## Results
+
+**TODO**
+
+### Extended results
+
+The following table contains the most relevant experiments performed with the model, providing different combinations of parameters and inputs.
+
+|   Batch size | Shuffle   |   # Heads |    # Layers |   Vocab length |   Captions per video |   Label smoothing |   Dropout |   Embeddings |   Warmup steps |   Validation BLEU score |   Train loss |   Validation loss |   Test BLEU score |
+|-------------:|:----------|----------:|-----------:|----------------:|---------------------:|------------------:|----------:|-------------:|---------------:|------------------------:|-------------:|------------------:|------------------:|
+|           64 | True      |         4 |          2 |            8000 |                   10 |               0.1 |       0.1 |           98 |           6000 |                  0.0579 |       2.6251 |            4.3751 |            0.3584 |
+|           64 | True      |         4 |          2 |           15000 |                   10 |               0.1 |       0.1 |           98 |           6000 |                  0.0594 |       2.7463 |            4.5089 |            0.3363 |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |           98 |           6000 |                  0.0554 |       2.6837 |            4.4896 |            0.3214 |
+|           64 | True      |         4 |          2 |            9647 |                    3 |               0.1 |       0.1 |           98 |           6000 |                  0.0636 |       2.4494 |            4.3972 |            0.3005 |
+|           64 | True      |         4 |          2 |           10000 |                    8 |               0.1 |       0.1 |           98 |           6000 |                  0.0649 |       2.6375 |            4.418  |            0.2969 |
+|           64 | True      |         4 |          2 |            6000 |                   10 |               0.1 |       0.1 |           98 |           6000 |                  0.0573 |       2.5803 |            4.3215 |            0.2931 |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |           49 |           6000 |                  0.059  |       2.6956 |            4.4632 |            0.2929 |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |          784 |           6000 |                  0.0497 |       2.6755 |            4.5463 |            0.2879 |
+|           64 | True      |         4 |          2 |           10000 |                    5 |               0.1 |       0.1 |           98 |           6000 |                  0.0632 |       2.5273 |            4.3388 |            0.2623 |
+|           64 | True      |         4 |          2 |           10000 |                   15 |               0.1 |       0.1 |           98 |           6000 |                  0.0478 |       2.7495 |            4.6483 |            0.26   |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |          196 |           6000 |                  0.059  |       2.6644 |            4.5092 |            0.2591 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           6000 |                  0.0551 |       2.4428 |            4.4057 |            0.249  |
+|           64 | True      |         4 |          2 |           10000 |                    4 |               0.1 |       0.1 |           98 |           6000 |                  0.0599 |       2.5302 |            4.3898 |            0.2326 |
+|           64 | True      |         4 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.051  |       2.3263 |            4.4374 |            0.2299 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           6000 |                  0.0467 |       2.737  |            4.6148 |            0.2257 |
+|          100 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           6000 |                  0.0504 |       2.153  |            4.3464 |            0.2154 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0433 |       2.3682 |            4.4897 |            0.2128 |
+|           64 | True      |         3 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0512 |       2.4137 |            4.3966 |            0.208  |
+|           64 | True      |         4 |          2 |           10000 |                   20 |               0.1 |       0.1 |           98 |           6000 |                  0.0377 |       2.752  |            4.8468 |            0.2019 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0501 |       2.436  |            4.4146 |            0.1887 |
+|          100 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0407 |       2.2216 |            4.3759 |            0.1814 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0431 |       2.5554 |            4.5715 |            0.1739 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0.0423 |       2.6161 |            4.6079 |            0.1731 |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |          392 |           6000 |                  0.0482 |       2.7182 |            4.6157 |            0.17   |
+|           64 | True      |         8 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0419 |       2.3638 |            4.4976 |            0.1646 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0415 |       2.5694 |            4.5844 |            0.1643 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0276 |       3.1268 |            4.9462 |            0.1505 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0.0306 |       2.5778 |            4.7218 |            0.1286 |
+|           64 | True      |         4 |          3 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0272 |       2.5867 |            4.7824 |            0.1162 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0197 |       3.0811 |            4.9345 |            0.1031 |
+|           64 | True      |         4 |          2 |            5966 |                    1 |               0.1 |       0.1 |           98 |           6000 |                  0.0269 |       2.3017 |            4.4986 |            0.0908 |
+|           64 | True      |         6 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0437 |       2.3596 |            4.5085 |            0.0774 |
+|          100 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.025  |       4.0037 |            4.848  |            0.0654 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0145 |       3.2447 |            4.9976 |            0.0569 |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0321 |       4.4453 |            5.0571 |            0.0482 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0395 |       3.8939 |            4.6937 |            0.0378 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0256 |       4.4217 |            4.9525 |            0.0289 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0221 |       4.6194 |            4.9522 |            0.0288 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0.0139 |       4.5701 |            5.0922 |            0.0203 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0.017  |       4.5684 |            5.1323 |            0.018  |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       5.1691 |            5.6516 |            0.0016 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       3.3888 |            5.5987 |            0.0012 |
+|           64 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0      |       3.768  |            6.1415 |            0      |
+|           64 | True      |         4 |          6 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0      |       3.784  |            6.4769 |            0      |
+|           64 | True      |         4 |         10 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0      |       3.7885 |            6.3405 |            0      |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       5.3778 |            5.8296 |            0      |
+|          100 | False     |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       6.0279 |            6.1063 |            0      |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       5.3581 |            5.9211 |            0      |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       5.621  |            5.9314 |            0      |
+|          100 | False     |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       6.0279 |            6.1063 |            0      |
+|          100 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       3.353  |            5.7906 |            0      |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       3.4094 |            5.6264 |            0      |
+|          100 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       3.7105 |            6.1041 |            0      |
+
+### Results Summary
+
+**TODO:** Summary of results
 
 ## Conclusions
 
