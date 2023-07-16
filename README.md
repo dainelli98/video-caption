@@ -66,19 +66,17 @@ pip install -e .
 
 ### Poetry
 
-To include a new package to the project it has to be added into the pyproject.toml
-under the correct group. Application packages have to be included inside `tool.poetry.dependencies`.
+To include a new package to the project it has to be added into the ``pyproject.toml`` file under the correct group. Application packages have to be included inside ``tool.poetry.dependencies``.
+
 Other packages have to be included in their respective groups like dev, docs or custom groups.
 
-To add a package run `poetry add [options] [--] <name>`. You can indicate the group to
-add the dependency to with the option `--group=GROUP`.
+To add a package run ``poetry add [options] [--] <name>``. You can indicate the group to add the dependency to with the option ``--group=GROUP``.
 
-To remove a package run `poetry remove [options] [--] <packages>`. You can indicate the group to
-remove the dependency from with the option `--group=GROUP`.
+To remove a package run ``poetry remove [options] [--] <packages>``. You can indicate the group to remove the dependency from with the option ``--group=GROUP``.
 
-To update the `poetry.lock` file, run `poetry lock --no-update`.
+To update the ``poetry.lock`` file, run ``poetry lock --no-update``.
 
-Run `poetry list` to get more information about all the commands that poetry can run.
+Run ``poetry list`` to get more information about all the commands that poetry can run.
 
 ### Generate documentation
 
@@ -414,6 +412,8 @@ The table below provides a summary of the generated datasets:
 
 **TODO:**
 
+**TODO:** Generate model architecture image
+
 #### General data flow
 
 **TODO:**
@@ -423,11 +423,79 @@ The table below provides a summary of the generated datasets:
 
 ### Model training
 
-**TODO:**
+We implemented a function with the training [logic](./vid_cap/modelling/train.py) that can be parameterized with the following arguments:
+- Captions per video: Number of captions per video to use in training and validation.
+- Vocabulary size: Number of words in the vocabulary.
+- Batch size: Number of samples per batch.
+- Shuffle: Whether to shuffle the training dataset or not.
+- Label smoothing: Label smoothing value.
+- Dropout: Dropout value.
+- Warmup steps: Number of warmup steps.
 
-### Model evaluation
+We can also set the maximum number of epochs to train for, but in the end we decided to set a high number that never is reached, and instead we always use early stopping to stop training.
 
-**TODO:**
+#### Loss Function
+
+We used the cross-entropy loss function to calculate the loss between the predicted and the actual word.
+
+#### Validation metric
+
+The metric we used for validation is the BLEU score.
+
+**TODO:** Talk about BLEU score
+
+#### NOAM Optimizer
+
+The optimizer we use comes from the paper ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762). It is a variant of Adam that uses a fixed learning rate schedule with a warmup period followed by a linear decay.
+
+The parameter ``warmup_steps`` is used to control the number of warmup steps. The learning rate increases linearly during the warmup period and decreases linearly after.
+
+We fixed the following parameters for the optimizer:
+- ``beta_1``: 0.9
+- ``beta_2``: 0.98
+- ``epsilon``: 1e-9
+
+#### Training epoch
+
+For each epoch we iterate over the training dataset and calculate the loss for each batch.
+
+If we use more than one caption per video, we associate a copy of the embedding with each caption, and they are trated as separate samples.
+
+**TODO:** Talk about teacher forcing and masking
+
+#### Validation epoch
+
+For each epoch we iterate over the validation dataset and calculate the loss for each batch and the BLEU score for each batch.
+
+We use the same criteria when using more than one caption per video as in the training epoch.
+
+The BLEU score is calculated using only the target caption associated with the dataset entry. With this methodology we are not using the other captions to calculate the BLEU score which lowers the score, but we think it is a more accurate representation of the model performance given that we are using teacher forcing here.
+
+#### Additional adjustments techniques
+
+We faced several challenges during the training process, to the point that we needed to do a lot of adjustments until the model started showing some learning. We implemented several techniques to overcome these challenges.
+
+##### Early Stopping
+
+We implemented early stopping to stop training when the validation loss stops improving.
+
+We ended up stopping training when the validation loss did not improve for 2 epochs, as we observed no improvement in the validation loss after that point.
+
+##### Label Smoothing
+
+We implemented label smoothing to prevent the model from predicting the most likely word with a probability of 1.0. This is done by replacing the ground truth label with a smoothed label distribution.
+
+##### Dropout
+
+We implemented dropout to prevent overfitting.
+
+In our model the dropout is applied to the output of the embedding layer and the output of the transformer decoder.
+
+### Model Testing
+
+For model testing we compare each prediction made from the embeddings of the test dataset with the 20 captions associated with it.
+
+As with validation, we use BLEU score as the metric to evaluate the model performance. In this case the values we obtain are much higher as the better models we were able to train manage quite well to predict the shorter captions associate with each video.
 
 ## Experiments
 
@@ -673,5 +741,6 @@ This together with the previous point may enable us to train with the full embed
 - [MSR-VTT: A Large Video Description Dataset for Bridging Video and Language](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/cvpr16.msr-vtt.tmei_-1.pdf)
 - [VideoMAE: Masked Autoencoders are Data-Efficient Learners for Self-Supervised Video Pre-Training](https://arxiv.org/abs/2203.12602)
 - [VideoMAE Huggingface](https://huggingface.co/docs/transformers/main/model_doc/videomae)
+["Attention Is All You Need"](https://arxiv.org/abs/1706.03762)
 
 **TODO:**
