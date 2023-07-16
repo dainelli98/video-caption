@@ -1,40 +1,54 @@
 # -*- coding: utf-8 -*-
 """Dataset class for loading video feature vector data."""
 import collections
+import enum
 from pathlib import Path
-import tqdm
 
 import numpy as np
 import pandas as pd
 import torch
+import tqdm
+from loguru import logger
+from subword_nmt.apply_bpe import BPE
+from subword_nmt.learn_bpe import learn_bpe
 from torch.utils.data import Dataset
 
-from subword_nmt.learn_bpe import learn_bpe
-from subword_nmt.apply_bpe import BPE
+
+class DatasetType(enum.Enum):
+    """Dataset type."""
+
+    TRAIN = "train"
+    VALID = "valid"
+    TEST = "test"
+
 
 class VideoEvalDataset(Dataset):
     """Dataset with video feature vectors and associated captions.
 
     :param video_dir: Directory with videos.
     :param caps_file: Path to captions file.
+    :param bpe_codes_file: Path to BPE codes file. If ``None`` no BPE is used.
     """
 
     _data: list[tuple[torch.Tensor, int]]
     _captions: pd.DataFrame
 
-    def __init__(self, video_dir: Path | str, caps_file: Path | str, bpe_codes_file: Path | str | None) -> None:
+    def __init__(
+        self, video_dir: Path | str, caps_file: Path | str, bpe_codes_file: Path | None
+    ) -> None:
         if not isinstance(video_dir, Path):
             video_dir = Path(video_dir)
 
         if not isinstance(caps_file, Path):
             caps_file = Path(caps_file)
 
-
         self._captions = pd.read_parquet(caps_file, dtype_backend="pyarrow")
-        
+
         if bpe_codes_file is not None:
-            bpe = BPE(open(bpe_codes_file, "r", encoding="utf-8"))
-            for idx, row in tqdm.tqdm( self._captions.iterrows(), f"Processing test captions with BPE codes"):
+            bpe = BPE(bpe_codes_file.open(encoding="utf-8"))
+            for idx, row in tqdm.tqdm(
+                self._captions.iterrows(), "Processing test captions with BPE codes"
+            ):
                 encoded_line = bpe.process_line(row["caption"])
                 self._captions.at[idx, "caption"] = encoded_line
 
@@ -78,31 +92,36 @@ class VideoEvalDataset(Dataset):
 class VideoFeatDataset(Dataset):
     """Dataset with video feature vectors and associated captions.
 
+    :type: Dataset type.
     :param video_dir: Directory with videos.
     :param caps_file: Path to captions file.
     :param caps_per_vid: Amount of captions per video, min=1, max=20.
         Defaults to ``None``.
-    :param vocab_len: Amount of words for vocabulary. If ``None`` no vocab is built.
+    :param vocab_len: Amount of words for vocabulary. If ``None`` no word vocab is built.
+        If bpe_num_operations is not ``None`` this is ignored.
+    :param bpe_dir: Directory with BPE codes file. Is necessary if ``bpe_num_operations``
+        is not ``None``.
+    :param bpe_num_operations: Number of BPE merge operations. If ``None`` no BPE is used.
     """
 
-    _type: str
+    _type: DatasetType
     _captions: pd.DataFrame
     _videos: dict[int, torch.Tensor]
     _vocab: dict[str, int] | None
     _coverage: float
-    _bpe_codes_file: Path | str | None = None
+    _bpe_codes_file: Path | None
 
     def __init__(
         self,
-        type: str,
+        type_: DatasetType,
         video_dir: Path | str,
         caps_file: Path | str,
         caps_per_vid: int | None = None,
         vocab_len: int | None = None,
-        data_dir: Path | str | None = None,
-        bpe_num_operations: int | None = None
+        bpe_dir: Path | None = None,
+        bpe_num_operations: int | None = None,
     ) -> None:
-        self._type = type
+        self._type = type_
 
         if not caps_per_vid:
             caps_per_vid = 20
@@ -119,7 +138,8 @@ class VideoFeatDataset(Dataset):
 
         self._captions = self._captions.sort_values("length")
 
-        self.build_vocab(vocab_len, data_dir, bpe_num_operations)
+        if bpe_num_operations is not None or vocab_len is not None:
+            self.build_vocab(vocab_len, bpe_dir, bpe_num_operations)
 
         if not isinstance(video_dir, Path):
             video_dir = Path(video_dir)
@@ -137,16 +157,15 @@ class VideoFeatDataset(Dataset):
         """
         if self._vocab is None:
             raise AttributeError("Vocabulary not built.")
-        
+
         return self._vocab
-    
+
     @property
     def bpe_codes_file(self) -> Path | str | None:
         """Get vocabulary.
 
         :return: Vocabulary.
         """
-        
         return self._bpe_codes_file
 
     @property
@@ -160,24 +179,27 @@ class VideoFeatDataset(Dataset):
 
         return len(self._vocab)
 
-    def build_vocab(self, vocab_len: int, data_dir: Path, bpe_num_operations: int | None) -> None:
+    def build_vocab(
+        self, vocab_len: int | None, bpe_dir: Path | None, bpe_num_operations: int | None
+    ) -> None:
         """Build vocabulary from the captions in the dataset using BPE encoding.
 
-        :param vocab_len: Amount of words for vocabulary.
-        :param bpe_codes_file: Path to the BPE codes file.
-        :param bpe_num_operations: Number of BPE merge operations.
+        :param vocab_len: Amount of words for vocabulary. If ``None`` no word vocab is built.
+        :param bpe_codes_file: Path to the BPE codes file. Is necessary if ``bpe_num_operations``
+            is not ``None``.
+        :param bpe_num_operations: Number of BPE merge operations. If ``None`` no BPE is used.
         """
         captions = self._captions["caption"].to_list()
-        
-        
-        if bpe_num_operations is None:
+
+        if bpe_num_operations is None and vocab_len is not None:
             words = [word for caption in captions for word in caption.split()]
             self._vocab = self.build_vocab_without_bpe(vocab_len, words)
-        else:
-            self._vocab = self.build_vocab_with_bpe(data_dir, bpe_num_operations)
+            self._bpe_codes_file = None
+        elif bpe_num_operations is not None:
+            self._vocab = self.build_vocab_with_bpe(bpe_dir, bpe_num_operations)
 
-        print('* Unique words', len(self._vocab))
-        print('* Coverage', self._coverage)
+        logger.info("Vocabulary has {} unique words", len(self._vocab))
+        logger.info("Vocabulary coverage is {}%", self._coverage * 100)
 
     def build_vocab_without_bpe(self, vocab_len: int, words: list[str]) -> dict[str, int]:
         """Build vocabulary without BPE encoding.
@@ -188,52 +210,61 @@ class VideoFeatDataset(Dataset):
         """
         vocab = collections.Counter(words)
         sorted_vocab = sorted(vocab, key=lambda x: vocab[x], reverse=True)
-      
+
         sorted_vocab.insert(0, "<eos>")
         sorted_vocab.insert(0, "<sos>")
         sorted_vocab.insert(0, "<unk>")
         sorted_vocab.insert(0, "<pad>")
 
-        truncated_sorted_vocab = sorted_vocab[:vocab_len]
+        if vocab_len < len(sorted_vocab):
+            truncated_sorted_vocab = sorted_vocab[:vocab_len]
+        else:
+            truncated_sorted_vocab = sorted_vocab
+
         voc = {token: idx for idx, token in enumerate(truncated_sorted_vocab)}
         self._coverage = self.__calculate_coverage__(words, voc)
         return voc
 
-    def build_vocab_with_bpe(self, data_dir: Path, bpe_num_operations: int) -> None:
+    def build_vocab_with_bpe(self, bpe_dir: Path, bpe_num_operations: int) -> None:
         """Build vocabulary with BPE encoding.
 
         :param vocab_len: Amount of words for vocabulary.
         :param bpe_codes_file: Path to the BPE codes file.
         :param bpe_num_operations: Number of BPE merge operations.
         """
-        self._bpe_codes_file = data_dir / "bpe" / f"bpe.codes"
-        bpe_captions_file = data_dir / "bpe" / f"captions-{self._type}.txt"
+        self._bpe_codes_file = bpe_dir / "bpe.codes"
+        bpe_captions_file = bpe_dir / f"captions-{self._type}.txt"
 
         captions = self._captions["caption"].to_list()
-        with open(bpe_captions_file, "w", encoding="utf-8") as f:
-            f.write('\n'.join(captions))
+        with bpe_captions_file.open("w", encoding="utf-8") as f:
+            f.write("\n".join(captions))
 
-        if self._type == "train":
-            # Generate BPE codes
-            print(f"Generating {self._type} BPE codes")
-            with open(self._bpe_codes_file, "w", encoding="utf-8") as codes_file:
-                learn_bpe(open(bpe_captions_file, "r", encoding="utf-8"), codes_file, bpe_num_operations, min_frequency=1)
+        if self._type == DatasetType.TRAIN:
+            logger.info("Generating train BPE codes")
+            with self._bpe_codes_file.open("w", encoding="utf-8") as codes_file:
+                learn_bpe(
+                    bpe_captions_file.open(encoding="utf-8"),
+                    codes_file,
+                    bpe_num_operations,
+                    min_frequency=1,
+                )
 
-        bpe = BPE(open(self._bpe_codes_file, "r", encoding="utf-8"))
-        for idx, row in tqdm.tqdm( self._captions.iterrows(), f"Processing {self._type} captions with BPE codes"):
+        bpe = BPE(self._bpe_codes_file.open(encoding="utf-8"))
+        for idx, row in tqdm.tqdm(
+            self._captions.iterrows(), f"Processing {self._type} captions with BPE codes"
+        ):
             encoded_line = bpe.process_line(row["caption"])
             self._captions.at[idx, "caption"] = encoded_line
 
-
         # Build vocabulary from BPE-encoded codes
         bpe_words = []
-        for caption in self._captions['caption']:
+        for caption in self._captions["caption"]:
             words = caption.split()
             bpe_words.extend(words)
 
         vocab = collections.Counter(bpe_words)
         sorted_vocab = sorted(vocab, key=lambda x: vocab[x], reverse=True)
-      
+
         sorted_vocab.insert(0, "<eos>")
         sorted_vocab.insert(0, "<sos>")
         sorted_vocab.insert(0, "<unk>")
@@ -261,8 +292,8 @@ class VideoFeatDataset(Dataset):
         :return: Length of dataset.
         """
         return self._captions.shape[0]
-    
-    def __calculate_coverage__(self, split: list, voc) -> float:
+
+    def __calculate_coverage__(self, split: list, voc: dict[str, int]) -> float:
         """Calculate the coverage of the vocabulary in the captions.
 
         :return: Coverage percentage.
@@ -270,10 +301,10 @@ class VideoFeatDataset(Dataset):
         total = 0.0
         unk = 0.0
         for token in split:
-            if not token in voc:
+            if token not in voc:
                 unk += 1.0
             total += 1.0
-        return 1.0 - (unk/total)
+        return 1.0 - (unk / total)
 
     @property
     def shape(self) -> tuple[int, int]:

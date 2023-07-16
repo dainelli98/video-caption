@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 # ruff: noqa: PLR0913
 """Script to do experiment."""
-import os
 import platform
 import random
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import click
 import joblib
@@ -18,7 +17,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from vid_cap import DATA_DIR
-from vid_cap.dataset import VideoEvalDataset, VideoFeatDataset
+from vid_cap.dataset import DatasetType, VideoEvalDataset, VideoFeatDataset
 from vid_cap.modelling import test, train
 from vid_cap.modelling.model import TransformerNet
 from vid_cap.modelling.scheduler import NoamOptimizer
@@ -40,7 +39,12 @@ _SEED = 1234
 )
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to train with GPU")
 @click.option("--epochs", default=50, type=click.IntRange(1, 10000), help="Number of epochs.")
-@click.option("--vocab-len", default=8000, type=click.IntRange(1, 100000), help="Vocab length.")
+@click.option(
+    "--vocab-len",
+    default=8000,
+    type=click.IntRange(1, 100000),
+    help="Vocab length. If BPE is used, this is ignored.",
+)
 @click.option(
     "--caps-per-vid",
     default=1,
@@ -48,7 +52,11 @@ _SEED = 1234
     help="Captions per video used in the dataset.",
 )
 @click.option("--dropout", default=0.1, type=click.FloatRange(0, 1), help="Dropout rate.")
-@click.option("--bpe-num-operations", default=None, type=click.IntRange(1, 100000), help="bpe_num_operations.")
+@click.option(
+    "--bpe-num-operations",
+    type=click.IntRange(1, 100000),
+    help="Number of BPE operations. If not provided, BPE will not be used.",
+)
 def main(
     warmup_steps: int,
     loss_smoothing: float,
@@ -62,7 +70,7 @@ def main(
     vocab_len: int,
     caps_per_vid: int,
     dropout: float,
-    bpe_num_operations: int | None
+    bpe_num_operations: int | None,
 ) -> None:
     """Perform experiement.
 
@@ -77,22 +85,24 @@ def main(
     :param n_layers: Number of decoder layers.
     :param use_gpu: Whether to try to use GPU.
     :param epochs: Number of epochs.
-    :param vocab_len: Vocab length.
+    :param vocab_len: Vocab length. If BPE is used, this is ignored.
     :param caps_per_vid: Number of captions per video.
     :param dropout: Dropout rate.
+    :param bpe_num_operations: Nuber of BPE operations. If not provided, BPE will not be
+        used.
     """
+    use_bpe = bpe_num_operations is not None
+
+    if use_bpe:
+        bpe_dir = data_dir / "bpe"
+        shutil.rmtree(bpe_dir, ignore_errors=True)
+        bpe_dir.mkdir(exist_ok=True, parents=True)
+
     torch.manual_seed(_SEED)
     np.random.seed(_SEED)
     random.seed(_SEED)
 
     exp_time = pd.Timestamp.now()
-
-    is_bpe_foler = os.path.exists(data_dir / "bpe")
-    if not is_bpe_foler:
-        os.makedirs(data_dir / "bpe")
-
-    for f in os.listdir(data_dir / "bpe"):
-        os.remove(os.path.join(data_dir / "bpe", f))
 
     gpu_model = "cpu"
 
@@ -107,28 +117,30 @@ def main(
     logger.info(f"Using device : {device}")
 
     train_dataset = VideoFeatDataset(
-        "train",
+        DatasetType.TRAIN,
         data_dir / "train" / "videos",
         data_dir / "train" / "captions.parquet",
         caps_per_vid,
         vocab_len,
-        data_dir=data_dir,
-        bpe_num_operations=bpe_num_operations
+        bpe_dir,
+        bpe_num_operations,
     )
 
     vocab_len = train_dataset.vocab_len
 
     valid_dataset = VideoFeatDataset(
-       "val", data_dir / "val" / "videos", data_dir / "val" / "captions.parquet", caps_per_vid, data_dir=data_dir, bpe_num_operations=bpe_num_operations
+        DatasetType.VALID,
+        data_dir / "val" / "videos",
+        data_dir / "val" / "captions.parquet",
+        caps_per_vid,
+        bpe_dir=bpe_dir,
+        bpe_num_operations=bpe_num_operations,
     )
 
-    # bpe_codes_file = data_dir / "bpe" / "bpe.codes"
-
-    # if not bpe_codes_file.is_file():
-    #     bpe_codes_file = None
-
     test_dataset = VideoEvalDataset(
-        data_dir / "test" / "videos", data_dir / "test" / "captions.parquet", train_dataset.bpe_codes_file
+        data_dir / "test" / "videos",
+        data_dir / "test" / "captions.parquet",
+        train_dataset.bpe_codes_file,
     )
 
     hparams = {
@@ -136,13 +148,14 @@ def main(
         "shuffle": shuffle,
         "n_heads": n_heads,
         "n_layers": n_layers,
-        "vocab_len": vocab_len,
+        "vocab_len": train_dataset.vocab_len,
         "caps_per_vid": caps_per_vid,
         "loss_smoothing": loss_smoothing,
         "dropout": dropout,
         "embeddings": train_dataset.shape[0],
         "warmup_steps": warmup_steps,
-        "bpe_num_operations": bpe_num_operations
+        "bpe_num_operations": bpe_num_operations,
+        "use_bpe": use_bpe,
     }
 
     [logger.debug(f"hparams::{k} : {v}") for k, v in hparams.items()]
@@ -182,11 +195,12 @@ def main(
         out_dir,
         writer,
         loss_smoothing,
-        train_dataset.bpe_codes_file
+        use_bpe,
     )
 
     joblib.dump(train_dataset.vocab, out_dir / "vocab.pkl")
-    shutil.copy(train_dataset.bpe_codes_file, out_dir)
+    if use_bpe:
+        shutil.copyfile(train_dataset.bpe_codes_file, out_dir / "bpe_codes.codes")
 
     loss_plot.plot_and_store_graphs(train_loss, val_loss, bleu_scores, lrs, out_dir)
 
@@ -199,7 +213,7 @@ def main(
     model.load_state_dict(torch.load(out_dir / "model", map_location=device))
 
     bleu_score = test.test_model(
-        model, test_loader, test_dataset.captions, train_dataset.vocab, device, train_dataset.bpe_codes_file
+        model, test_loader, test_dataset.captions, train_dataset.vocab, device, use_bpe
     )
 
     logger.info(f"Test BLEU score : {bleu_score}")
