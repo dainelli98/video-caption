@@ -639,6 +639,12 @@ Finally we iterated though differents embedding sampling values: 2, 4, 8, 16, 32
 
 The best embedding sampling value was 16.
 
+#### Final train chart
+
+Here is the training chart we got when training our final model:
+
+![Training chart](./report/images/training.png)
+
 ## Results
 
 ### Results Summary
@@ -691,20 +697,20 @@ We also can find cases where the model fails clearly.
 
 Here are some examples of predictions and some of their targets:
 
-- a woman is applying makeup
-  - targets: ['a female giving a tutorial on how to apply makeup', 'a woman applies makeup around her eyes forehead and cheeks', 'a woman applying makeup', 'a woman is applying makeup', 'a woman is preparing her make up']
-- a car is shown
-  - targets: ['a acura integra that is for sale being shown', 'a car is being displayed', 'a gray integra is filmed', 'a person is explaining about a car', 'a person is recording inside the car']
-- a woman is cooking in a bowl
-  - targets: ['a baking mix is stirred in a bowl while oil is added', 'a chef mixing ingredients in a bowl', 'a person is mixing ingredients for a recipe', 'a person mixing up some food', 'a woman is cooking']
-- a person is cooking a egg
-  - targets: ['a lady is showing some food recipe', 'a mixer mixes a yellow substance', 'a person is cooking', 'a person is cooking', 'a person is mixing ingredients in a mixer']
-- a girl is singing on a tv
-  - targets: ['a child preforms a song on stage', 'a family celebrates when judges turn around to watch an audition', 'a girl is performing for a group of judges', 'a girl is singing on a television show', 'a girl is singing on stage with her family watching from behind stage']
-- a man is playing a video game
-  - targets: ['a character is set up at the beginning of a video game', 'a person is choosing a video game character s \<unk\>', 'a person is playing a video game', 'a person is playing a video game', 'a person is playing a video game']
-- a man is showing a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about
-  - targets: ['a woman puts tomatoes in a food processor and blends them to a paste', 'in the kitchen a lady grinding some food in the grinder', 'in the kitchenthere is a women working with mixer grinder', 'the woman is demonstrating the use of a food processor with tomatoes', 'one lady open the mixer jar and telling the taste of a dishes']
+- 'a woman is applying makeup'
+  - targets: 'a female giving a tutorial on how to apply makeup', 'a woman applies makeup around her eyes forehead and cheeks', 'a woman applying makeup', 'a woman is applying makeup', 'a woman is preparing her make up'
+- 'a car is shown'
+  - targets: 'a acura integra that is for sale being shown', 'a car is being displayed', 'a gray integra is filmed', 'a person is explaining about a car', 'a person is recording inside the car'
+- 'a woman is cooking in a bowl'
+  - targets: 'a baking mix is stirred in a bowl while oil is added', 'a chef mixing ingredients in a bowl', 'a person is mixing ingredients for a recipe', 'a person mixing up some food', 'a woman is cooking'
+- 'a person is cooking a egg'
+  - targets: 'a lady is showing some food recipe', 'a mixer mixes a yellow substance', 'a person is cooking', 'a person is cooking', 'a person is mixing ingredients in a mixer'
+- 'a girl is singing on a tv'
+  - targets: 'a child preforms a song on stage', 'a family celebrates when judges turn around to watch an audition', 'a girl is performing for a group of judges', 'a girl is singing on a television show', 'a girl is singing on stage with her family watching from behind stage'
+- 'a man is playing a video game'
+  - targets: 'a character is set up at the beginning of a video game', 'a person is choosing a video game character s \<unk\>', 'a person is playing a video game', 'a person is playing a video game', 'a person is playing a video game'
+- 'a man is showing a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about'
+  - targets: 'a woman puts tomatoes in a food processor and blends them to a paste', 'in the kitchen a lady grinding some food in the grinder', 'in the kitchenthere is a women working with mixer grinder', 'the woman is demonstrating the use of a food processor with tomatoes', 'one lady open the mixer jar and telling the taste of a dishes'
 
 #### Wrong behaviors
 
