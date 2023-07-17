@@ -17,7 +17,8 @@
         "--batch-size",
         "64",
         "--epochs",
-        "50"
+        "50",
+        "--dropout", "0.1", "--warmup-steps", "6000", "--label-smoothing", "0.1"
       ],
       "justMyCode": true,
       "module": "vid_cap.__main__",

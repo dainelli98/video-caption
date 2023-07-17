@@ -509,6 +509,10 @@ For model testing we compare each prediction made from the embeddings of the tes
 
 As with validation, we use BLEU score as the metric to evaluate the model performance. In this case the values we obtain are much higher as the better models we were able to train manage quite well to predict the shorter captions associate with each video.
 
+### Validation and Test BLEUs
+
+The BLEU values for validation are significantly lower than the ones for test. This is caused by the fact that each prediction made in validation is compared with only one caption while in test we compare each prediction with the 20 captions associated to the video from which the prediction is made from.
+
 ## Experiments
 
 With the model implementation finished we proceeded to perform several experiments to improve the model performance as much as possible while getting answering other questions that arose in the previous steps of the process.
@@ -524,9 +528,10 @@ After the initial stages of the project, we identified several questions that we
 ### Experiment definition
 
 We implemented 3 different scripts to perform the experiments:
-  - [train](./vid_cap/scripts/train.py): Trains a model ans saves model, training information and vocabulary.
-  - [test](./vid_cap/scripts/test.py): Loads model and vocabulary and uses test data to evaluate model performance.
-  - [experiment](./vid_cap/scripts/experiment.py): Runs train and test. At the end stores experiment information and adds it to the experiment tracking file.
+
+- [train](./vid_cap/scripts/train.py): Trains a model ans saves model, training information and vocabulary.
+- [test](./vid_cap/scripts/test.py): Loads model and vocabulary and uses test data to evaluate model performance.
+- [experiment](./vid_cap/scripts/experiment.py): Runs train and test. At the end stores experiment information and adds it to the experiment tracking file.
 
 All scripts can be observed with ``Tensorboard``.
 
@@ -612,7 +617,7 @@ We iterated though differents vocabulary sizes: 6000, 8000, 12000, 100% train co
 
 The best vocabulary size was 10000.
 
-We discarded usign 8000 because the amount of words in the vocabulary was not enough to avoiid having too many ``<unk>`` tokens in the captions.
+We discarded usign 8000 because the amount of words in the vocabulary was not enough to avoiid having too many ``\<unk\>`` tokens in the captions.
 
 Also we decided that the improvement we could get by increasing the vocabulary size so that train coverage was 100% was not worth.
 
@@ -632,71 +637,130 @@ Also we can look at the wrong behaviors that we observed.
 
 #### Best model
 
-**TODO:**
+As described in the experimental process section. We decided that the best configuration that we found was the following:
 
-#### Wrong behaviours
+##### Input data
 
-**TODO:**
+For training and predictions we decided to use the 16-bit float with subsampling of 1/16 encodings, that we associate with 10 different captions on training.
+
+##### Vocabulary
+
+We decided to use a vocabulary of size 10000. Even if lower values or values that got us 100% coverage got us slightly better metrics we decided to keep this amount given that the first generated captions with to many instances of the \<unk\> token and the second did not provide enough improvement to justify the vocabulary size increase.
+
+##### Model size
+
+The parameters to configure the model size that we chose are 4 heads and 2 transformer decoder layers. This values were the ones that provided the best results overall.
+
+##### Training parameters
+
+The rest of train parameters that let us obtain the best results were the following:
+
+- Batch size: 64
+- Train dataset shuffle: True
+- Label smoothing: 0.1
+- Dropout: 0.1
+- Warmup steps: 6000
+
+##### Metrics
+
+The BLEU score obtained with the configuration that we considered the best, even if we had great difficulty to reach decent performance in the beginning can be considered good:
+
+The BLEU score obtained with the test set was of 0.321422 comparing with up to 4-grams.
+
+Even though, this value needs to be put in context. In test we compared the caption for each video with its 20 associated captions. Usually one of those captions has less than 10 words, and our model was good generating short situational descriptions, which may be a factor that raised considerably the BLEU score obtained on test.
+
+##### Examples
+
+Most predictions manage to capture the context of the video or at least describe a situation with characteristics similar to the ones of the video for which the prediction is made for, even if the interactions are nos exactly those happening in the video.
+
+Also, as we said before, the model tends to provide short descriptions. This may be caused by the fact that the dataset contained mostly captions for train and validation.
+
+We also can find cases where the model fails clearly.
+
+Here are some examples of predictions and some of their targets:
+
+- a woman is applying makeup
+  - targets: ['a female giving a tutorial on how to apply makeup', 'a woman applies makeup around her eyes forehead and cheeks', 'a woman applying makeup', 'a woman is applying makeup', 'a woman is preparing her make up']
+- a car is shown
+  - targets: ['a acura integra that is for sale being shown', 'a car is being displayed', 'a gray integra is filmed', 'a person is explaining about a car', 'a person is recording inside the car']
+- a woman is cooking in a bowl
+  - targets: ['a baking mix is stirred in a bowl while oil is added', 'a chef mixing ingredients in a bowl', 'a person is mixing ingredients for a recipe', 'a person mixing up some food', 'a woman is cooking']
+- a person is cooking a egg
+  - targets: ['a lady is showing some food recipe', 'a mixer mixes a yellow substance', 'a person is cooking', 'a person is cooking', 'a person is mixing ingredients in a mixer']
+- a girl is singing on a tv
+  - targets: ['a child preforms a song on stage', 'a family celebrates when judges turn around to watch an audition', 'a girl is performing for a group of judges', 'a girl is singing on a television show', 'a girl is singing on stage with her family watching from behind stage']
+- a man is playing a video game
+  - targets: ['a character is set up at the beginning of a video game', 'a person is choosing a video game character s \<unk\>', 'a person is playing a video game', 'a person is playing a video game', 'a person is playing a video game']
+- a man is showing a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about
+  - targets: ['a woman puts tomatoes in a food processor and blends them to a paste', 'in the kitchen a lady grinding some food in the grinder', 'in the kitchenthere is a women working with mixer grinder', 'the woman is demonstrating the use of a food processor with tomatoes', 'one lady open the mixer jar and telling the taste of a dishes']
+
+#### Wrong behaviors
+
+During our search of a good model we found some common behaviors:
+
+- Repeating "a" all the sentence token: This may be caused by a significant part of training data starting with word "a".
+- Repeating \<pad\> all the sentence token: This may be caused by the model not interpreting the use of \<pad\> correctly.
+- Repeating the main concept all the sentence: The model could only identify and repeat one concept (for instance "a car a car a car car car car a a a")
 
 ### Extended results
 
 The following table contains the most relevant experiments performed with the model, providing different combinations of parameters and inputs.
 
-|   Batch size | Shuffle   |   # Heads |    # Layers |   Vocab length |   Captions per video |   Label smoothing |   Dropout |   Embeddings |   Warmup steps |   Validation BLEU score |   Train loss |   Validation loss |   Test BLEU score |
-|-------------:|:----------|----------:|-----------:|----------------:|---------------------:|------------------:|----------:|-------------:|---------------:|------------------------:|-------------:|------------------:|------------------:|
-|           64 | True      |         4 |          2 |            8000 |                   10 |               0.1 |       0.1 |           98 |           6000 |                  0.0579 |       2.6251 |            4.3751 |            0.3584 |
-|           64 | True      |         4 |          2 |           15000 |                   10 |               0.1 |       0.1 |           98 |           6000 |                  0.0594 |       2.7463 |            4.5089 |            0.3363 |
-|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |           98 |           6000 |                  0.0554 |       2.6837 |            4.4896 |            0.3214 |
-|           64 | True      |         4 |          2 |            9647 |                    3 |               0.1 |       0.1 |           98 |           6000 |                  0.0636 |       2.4494 |            4.3972 |            0.3005 |
-|           64 | True      |         4 |          2 |           10000 |                    8 |               0.1 |       0.1 |           98 |           6000 |                  0.0649 |       2.6375 |            4.418  |            0.2969 |
-|           64 | True      |         4 |          2 |            6000 |                   10 |               0.1 |       0.1 |           98 |           6000 |                  0.0573 |       2.5803 |            4.3215 |            0.2931 |
-|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |           49 |           6000 |                  0.059  |       2.6956 |            4.4632 |            0.2929 |
-|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |          784 |           6000 |                  0.0497 |       2.6755 |            4.5463 |            0.2879 |
-|           64 | True      |         4 |          2 |           10000 |                    5 |               0.1 |       0.1 |           98 |           6000 |                  0.0632 |       2.5273 |            4.3388 |            0.2623 |
-|           64 | True      |         4 |          2 |           10000 |                   15 |               0.1 |       0.1 |           98 |           6000 |                  0.0478 |       2.7495 |            4.6483 |            0.26   |
-|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |          196 |           6000 |                  0.059  |       2.6644 |            4.5092 |            0.2591 |
-|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           6000 |                  0.0551 |       2.4428 |            4.4057 |            0.249  |
-|           64 | True      |         4 |          2 |           10000 |                    4 |               0.1 |       0.1 |           98 |           6000 |                  0.0599 |       2.5302 |            4.3898 |            0.2326 |
-|           64 | True      |         4 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.051  |       2.3263 |            4.4374 |            0.2299 |
-|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           6000 |                  0.0467 |       2.737  |            4.6148 |            0.2257 |
-|          100 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           6000 |                  0.0504 |       2.153  |            4.3464 |            0.2154 |
-|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0433 |       2.3682 |            4.4897 |            0.2128 |
-|           64 | True      |         3 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0512 |       2.4137 |            4.3966 |            0.208  |
-|           64 | True      |         4 |          2 |           10000 |                   20 |               0.1 |       0.1 |           98 |           6000 |                  0.0377 |       2.752  |            4.8468 |            0.2019 |
-|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0501 |       2.436  |            4.4146 |            0.1887 |
-|          100 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0407 |       2.2216 |            4.3759 |            0.1814 |
-|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0431 |       2.5554 |            4.5715 |            0.1739 |
-|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0.0423 |       2.6161 |            4.6079 |            0.1731 |
-|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |          392 |           6000 |                  0.0482 |       2.7182 |            4.6157 |            0.17   |
-|           64 | True      |         8 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0419 |       2.3638 |            4.4976 |            0.1646 |
-|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0415 |       2.5694 |            4.5844 |            0.1643 |
-|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0276 |       3.1268 |            4.9462 |            0.1505 |
-|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0.0306 |       2.5778 |            4.7218 |            0.1286 |
-|           64 | True      |         4 |          3 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0272 |       2.5867 |            4.7824 |            0.1162 |
-|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0197 |       3.0811 |            4.9345 |            0.1031 |
-|           64 | True      |         4 |          2 |            5966 |                    1 |               0.1 |       0.1 |           98 |           6000 |                  0.0269 |       2.3017 |            4.4986 |            0.0908 |
-|           64 | True      |         6 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0.0437 |       2.3596 |            4.5085 |            0.0774 |
-|          100 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.025  |       4.0037 |            4.848  |            0.0654 |
-|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0145 |       3.2447 |            4.9976 |            0.0569 |
-|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0321 |       4.4453 |            5.0571 |            0.0482 |
-|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |           98 |           4000 |                  0.0395 |       3.8939 |            4.6937 |            0.0378 |
-|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0256 |       4.4217 |            4.9525 |            0.0289 |
-|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0.0221 |       4.6194 |            4.9522 |            0.0288 |
-|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0.0139 |       4.5701 |            5.0922 |            0.0203 |
-|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0.017  |       4.5684 |            5.1323 |            0.018  |
-|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       5.1691 |            5.6516 |            0.0016 |
-|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       3.3888 |            5.5987 |            0.0012 |
-|           64 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0      |       3.768  |            6.1415 |            0      |
-|           64 | True      |         4 |          6 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0      |       3.784  |            6.4769 |            0      |
-|           64 | True      |         4 |         10 |            8073 |                    2 |               0.1 |       0.1 |           98 |           6000 |                  0      |       3.7885 |            6.3405 |            0      |
-|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       5.3778 |            5.8296 |            0      |
-|          100 | False     |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       6.0279 |            6.1063 |            0      |
-|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       5.3581 |            5.9211 |            0      |
-|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       5.621  |            5.9314 |            0      |
-|          100 | False     |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       6.0279 |            6.1063 |            0      |
-|          100 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       3.353  |            5.7906 |            0      |
-|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |           98 |           4000 |                  0      |       3.4094 |            5.6264 |            0      |
-|          100 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |           98 |           4000 |                  0      |       3.7105 |            6.1041 |            0      |
+|   Batch size | Shuffle   |   # Heads |    # Layers |   Vocab length |   Captions per video |   Label smoothing |   Dropout |   Sampling period |   Warmup steps |   Train loss |   Validation loss |   Test BLEU score |
+|-------------:|:----------|----------:|-----------:|----------------:|---------------------:|------------------:|----------:|------------------:|---------------:|-------------:|------------------:|------------------:|
+|           64 | True      |         4 |          2 |            8000 |                   10 |               0.1 |       0.1 |                16 |           6000 |       2.6251 |            4.3751 |            0.3584 |
+|           64 | True      |         4 |          2 |           15000 |                   10 |               0.1 |       0.1 |                16 |           6000 |       2.7463 |            4.5089 |            0.3363 |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |                16 |           6000 |       2.6837 |            4.4896 |            0.3214 |
+|           64 | True      |         4 |          2 |            9647 |                    3 |               0.1 |       0.1 |                16 |           6000 |       2.4494 |            4.3972 |            0.3005 |
+|           64 | True      |         4 |          2 |           10000 |                    8 |               0.1 |       0.1 |                16 |           6000 |       2.6375 |            4.418  |            0.2969 |
+|           64 | True      |         4 |          2 |            6000 |                   10 |               0.1 |       0.1 |                16 |           6000 |       2.5803 |            4.3215 |            0.2931 |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |                32 |           6000 |       2.6956 |            4.4632 |            0.2929 |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |                 2 |           6000 |       2.6755 |            4.5463 |            0.2879 |
+|           64 | True      |         4 |          2 |           10000 |                    5 |               0.1 |       0.1 |                16 |           6000 |       2.5273 |            4.3388 |            0.2623 |
+|           64 | True      |         4 |          2 |           10000 |                   15 |               0.1 |       0.1 |                16 |           6000 |       2.7495 |            4.6483 |            0.26   |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |                 8 |           6000 |       2.6644 |            4.5092 |            0.2591 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           6000 |       2.4428 |            4.4057 |            0.249  |
+|           64 | True      |         4 |          2 |           10000 |                    4 |               0.1 |       0.1 |                16 |           6000 |       2.5302 |            4.3816 |            0.2326 |
+|           64 | True      |         4 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       2.3263 |            4.4374 |            0.2299 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           6000 |       2.737  |            4.6148 |            0.2257 |
+|          100 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           6000 |       2.153  |            4.3464 |            0.2154 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           4000 |       2.3682 |            4.4897 |            0.2128 |
+|           64 | True      |         3 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       2.4137 |            4.3966 |            0.208  |
+|           64 | True      |         4 |          2 |           10000 |                   20 |               0.1 |       0.1 |                16 |           6000 |       2.752  |            4.8468 |            0.2019 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       2.436  |            4.4146 |            0.1887 |
+|          100 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           4000 |       2.2216 |            4.3759 |            0.1814 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       2.5554 |            4.5715 |            0.1739 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |                16 |           4000 |       2.6161 |            4.6079 |            0.1731 |
+|           64 | True      |         4 |          2 |           10000 |                   10 |               0.1 |       0.1 |                 4 |           6000 |       2.7182 |            4.6157 |            0.17   |
+|           64 | True      |         8 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       2.3638 |            4.4976 |            0.1646 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       2.5694 |            4.5844 |            0.1643 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           4000 |       3.1268 |            4.9462 |            0.1505 |
+|           64 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |                16 |           4000 |       2.5778 |            4.7218 |            0.1286 |
+|           64 | True      |         4 |          3 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       2.5867 |            4.7824 |            0.1162 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       3.0811 |            4.9345 |            0.1031 |
+|           64 | True      |         4 |          2 |            5966 |                    1 |               0.1 |       0.1 |                16 |           6000 |       2.3017 |            4.4166 |            0.0908 |
+|           64 | True      |         6 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       2.3596 |            4.5085 |            0.0774 |
+|          100 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           4000 |       4.0037 |            4.848  |            0.0654 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       3.2447 |            4.9976 |            0.0569 |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           4000 |       4.4453 |            5.0571 |            0.0482 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0   |                16 |           4000 |       3.8939 |            4.6937 |            0.0378 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       4.4217 |            4.9525 |            0.0289 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       4.6194 |            4.9522 |            0.0288 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |                16 |           4000 |       4.5701 |            5.0922 |            0.0203 |
+|           64 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |                16 |           4000 |       4.5684 |            5.1323 |            0.018  |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       5.1691 |            5.6516 |            0.0016 |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |                16 |           4000 |       3.3888 |            5.5167 |            0.0012 |
+|           64 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       3.768  |            6.1415 |            0      |
+|           64 | True      |         4 |          6 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       3.784  |            6.4769 |            0      |
+|           64 | True      |         4 |         10 |            8073 |                    2 |               0.1 |       0.1 |                16 |           6000 |       3.7885 |            6.3405 |            0      |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |                16 |           4000 |       5.3778 |            5.8296 |            0      |
+|          100 | False     |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       6.0279 |            6.1063 |            0      |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       5.3581 |            5.9211 |            0      |
+|           32 | False     |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |                16 |           4000 |       5.621  |            5.9314 |            0      |
+|          100 | False     |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       6.0279 |            6.1063 |            0      |
+|          100 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       3.353  |            5.7906 |            0      |
+|           32 | True      |         2 |          2 |            8073 |                    2 |               0.1 |       0.2 |                16 |           4000 |       3.4094 |            5.6264 |            0      |
+|          100 | True      |         4 |          4 |            8073 |                    2 |               0.1 |       0.1 |                16 |           4000 |       3.7105 |            6.1041 |            0      |
 
 ## Conclusions
 
@@ -728,7 +792,7 @@ The results show that from the pool of parameter combinations that we tried the 
   - Dropout: 0.1
   - Warmup steps: 6000
 
-**TODO:**
+As explained in results, this parameters allowed us mostly to obtain short but correct descriptions of a great amount of videos.
 
 ## Next Steps
 
@@ -746,8 +810,6 @@ Even though we wanted to use a fully pretrained model, and we were able to obtai
 
 This together with the previous point may enable us to train with the full embeddings and bigger model architectures. Though it may be unnecessary given that we are already obtaining good results.
 
-**TODO:**
-
 ## References
 
 - [MSR-VTT: A Large Video Description Dataset for Bridging Video and Language](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/cvpr16.msr-vtt.tmei_-1.pdf)
@@ -755,5 +817,3 @@ This together with the previous point may enable us to train with the full embed
 - [VideoMAE Huggingface](https://huggingface.co/docs/transformers/main/model_doc/videomae)
 - ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762)
 - [Language modeling with nn.transformer and torchtext](https://pytorch.org/tutorials/beginner/transformer_tutorial.html)
-
-**TODO:**
