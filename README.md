@@ -2,7 +2,19 @@
 
 ## Table of Contents
 
-**TODO:** Use ChatGPT
+- [Team Information](#team-information)
+- [Introduction](#introduction)
+- [Project Goals](#project-goals)
+- [Environment Setup](#environment-setup)
+- [Running the project](#running-the-project)
+- [Dataset. MSR-VTT 10K](#dataset-msr-vtt-10k)
+- [Methods/Algorithms Used](#methods-algorithms-used)
+- [Experiments](#experiments)
+- [Results](#results)
+- [Conclusions](#conclusions)
+- [Next Steps](#next-steps)
+- [References](#references)
+
 
 ## Team Information
 
