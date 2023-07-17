@@ -47,13 +47,13 @@ To run this project you will need to install the following dependencies:
 ### Cloning and first steps
 
 ```shell
-git clone https://github.com/dainelli98/video_caption.git
+$ git clone https://github.com/dainelli98/video_caption.git
 ```
 
 After having cloned the repo, if not using docker, create a virtual environment and install Python packages:
 
 ```shell
-make venv
+$ make venv
 ```
 
 ### Installation
@@ -61,7 +61,7 @@ make venv
 Install package via pip using:
 
 ```shell
-pip install -e .
+$ pip install -e .
 ```
 
 ### Poetry
@@ -83,7 +83,7 @@ Run ``poetry list`` to get more information about all the commands that poetry c
 Run the following command to generate project API documentation:
 
 ```shell
-make docs
+$ make docs
 ```
 
 ## Running the project
@@ -98,7 +98,7 @@ This projects provides 4 commands that can be run and configured usign CLI:
 To get information about the arguments that each command accepts, run:
 
 ```shell
-vid-cap --help
+$ vid-cap --help
 
 Usage: vid-cap [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
 
@@ -114,13 +114,13 @@ Options:
 To run the script that prepares the video encoding dataset, run:
 
 ```shell
-vid-cap prepare-dataset
+$ vid-cap prepare-dataset
 ```
 
 To obtain information about the arguments that this command accepts, run:
 
 ```shell
-vid-cap prepare-dataset --help
+$ vid-cap prepare-dataset --help
 
 Usage: vid-cap prepare-dataset [OPTIONS]
 
@@ -136,13 +136,13 @@ Options:
 To run the script to train the model, run:
 
 ```shell
-vid-cap train
+$ vid-cap train
 ```
 
 To obtain information about the arguments that this command accepts, run:
 
 ```shell
-vid-cap train --help
+$ vid-cap train --help
 
 Usage: vid-cap train [OPTIONS]
 
@@ -174,13 +174,13 @@ Options:
 To run the script to evaluate the model, run:
 
 ```shell
-vid-cap test
+$ vid-cap test
 ```
 
 To obtain information about the arguments that this command accepts, run:
 
 ```shell
-vid-cap test --help
+$ vid-cap test --help
 
 Usage: vid-cap test [OPTIONS]
 
@@ -202,13 +202,13 @@ Options:
 To run the script that performs an experiment that trains and evaluates a model, run:
 
 ```shell
-vid-cap experiment
+$ vid-cap experiment
 ```
 
 To obtain information about the arguments that this command accepts, run:
 
 ```shell
-vid-cap experiment --help
+$ vid-cap experiment --help
 
 Usage: vid-cap experiment [OPTIONS]
 
