@@ -90,7 +90,7 @@ $ make docs
 
 ## Running the project
 
-This projects provides 4 commands that can be run and configured usign CLI:
+This projects provides 4 commands that can be run and configured using CLI:
 
 - ``prepare-dataset``
 - ``train``
@@ -617,7 +617,7 @@ We iterated though differents vocabulary sizes: 6000, 8000, 12000, 100% train co
 
 The best vocabulary size was 10000.
 
-We discarded usign 8000 because the amount of words in the vocabulary was not enough to avoiid having too many ``\<unk\>`` tokens in the captions.
+We discarded using 8000 because the amount of words in the vocabulary was not enough to avoiid having too many ``\<unk\>`` tokens in the captions.
 
 Also we decided that the improvement we could get by increasing the vocabulary size so that train coverage was 100% was not worth.
 
