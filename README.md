@@ -8,9 +8,11 @@
 
 - Team Members
   - Daniel Martín ([danitiana98@gmail.com](mailto:danitiana98@gmail.com))
-  - Joan Pascual **TODO:** add mail
+  - Joan Pascual
+([joanpascualgrau@gmail.com](mailto:joanpascualgrau@gmail.com))
+  - Sergi Taramon
+([sergitaramon21@gmail.com](mailto:sergitaramon21@gmail.com))
   - Juan Bacardit **TODO:** add mail
-  - Sergi Taramon **TODO:** add mail
 - Advisor: Carlos Escolano
 - Framework: ``pytorch``
 
@@ -407,13 +409,19 @@ The table below provides a summary of the generated datasets:
 
 ### Transformer Decoder
 
-**TODO:**
+We have defined a custom Transformer model with a decoder architecture. This model is composed by:
+
+- Embedding Layer: this layer is responsible for converting input tokens into their corresponding embeddings. The size of the input is the vocabulary size and the output is the embedding dimension.
+- Positional Encoding Layer: this layer adds positional information to the input embeddings, which is necessary for the Transformer model as it doesn't have any inherent notion of the position of tokens in a sequence.
+- Transformer Decoder: this is the core of the Transformer model. It uses a Transformer decoder layer, which consists of a multi-head attention mechanism and a position-wise feed-forward network. The number of layers and attention heads, the activation function, and the dropout rate can all be specified when initializing the model. It also includes a masking mechanism to prevent attention to future positions in the sequence.
+- Dense Layer: finally a linear layer that maps the output of the Transformer decoder to the vocabulary size, acting as a classifier over the entire vocabulary.
+
+First of all we initialize the model. The weights of the embedding layer are uniformly initialized with a small range (-0.1 to 0.1).
+Then during forward propagation, the input target sequence is passed through the embedding layer, the positional encoding layer, and the Transformer decoder and finally the output of the decoder is passed through the final dense layer.
 
 #### Model Architecture
 
-**TODO:**
-
-**TODO:** Generate model architecture image
+The model architecture described in the prior section can be seen in this [image](./report/images/render.png).
 
 #### General data flow
 
@@ -421,10 +429,10 @@ The table below provides a summary of the generated datasets:
 
 ![General data flow](./report/images/general_flow.png)
 
-
 ### Model training
 
 We implemented a function with the [training logic](./vid_cap/modelling/train.py) that can be parameterized with the following arguments:
+
 - Captions per video: Number of captions per video to use in training and validation.
 - Vocabulary size: Number of words in the vocabulary.
 - Batch size: Number of samples per batch.
@@ -443,7 +451,7 @@ We used the cross-entropy loss function to calculate the loss between the predic
 
 The metric we used for validation is the BLEU score.
 
-**TODO:** Talk about BLEU score
+This metric is very popular in machine translation to compare a candidate translation of text to one or more reference translations. It quantifies the quality of the predicted text by checking how many subsequences match the reference target. The score ranges from 0 to 1 where 1 means a perfect match with the reference.
 
 #### NOAM Optimizer
 
@@ -452,6 +460,7 @@ The optimizer we use comes from the paper ["Attention Is All You Need"](https://
 The parameter ``warmup_steps`` is used to control the number of warmup steps. The learning rate increases linearly during the warmup period and decreases linearly after.
 
 We fixed the following parameters for the optimizer:
+
 - ``beta_1``: 0.9
 - ``beta_2``: 0.98
 - ``epsilon``: 1e-9
@@ -462,7 +471,9 @@ For each epoch we iterate over the training dataset and calculate the loss for e
 
 If we use more than one caption per video, we associate a copy of the embedding with each caption, and they are trated as separate samples.
 
-**TODO:** Talk about teacher forcing and masking
+We have used teacher forcing during training and validation. This is a strategy commonly used to train seq2seq models. This strategy reduce having “exposure bias” problems, that occurs when the model is trained on the true sequence but must generate sequences from its own imperfect predictions during inference. Thanks to teacher forcing we use the true output sequence as the input to the model instead of the model’s won predictions, so that the model is forced to learn from the true sequence rather than from its own.
+
+We also use masking during training to ensure that the prediction for a certain step does not depend on any elements in the future.
 
 #### Validation epoch
 
@@ -623,7 +634,7 @@ Also we can look at the wrong behaviors that we observed.
 
 **TODO:**
 
-#### Wrong berhaivors
+#### Wrong behaviours
 
 **TODO:**
 
@@ -731,7 +742,7 @@ The abovementioned framework could be deployed as an application accessible thro
 
 ### Fine-tune the model encoder
 
-Even we wanted to use a fully pretrained model, and we were able to obtain good enough results with it, we think that it would be worth exploring if it is possible to obtain better results if we fine-tune the model encoder retraining it with the decoder and our training data.
+Even though we wanted to use a fully pretrained model, and we were able to obtain good enough results with it, we think that it would be worth exploring if it is possible to obtain better results if we fine-tune the model encoder and retrain it with the decoder and our training data.
 
 This together with the previous point may enable us to train with the full embeddings and bigger model architectures. Though it may be unnecessary given that we are already obtaining good results.
 
@@ -742,6 +753,7 @@ This together with the previous point may enable us to train with the full embed
 - [MSR-VTT: A Large Video Description Dataset for Bridging Video and Language](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/cvpr16.msr-vtt.tmei_-1.pdf)
 - [VideoMAE: Masked Autoencoders are Data-Efficient Learners for Self-Supervised Video Pre-Training](https://arxiv.org/abs/2203.12602)
 - [VideoMAE Huggingface](https://huggingface.co/docs/transformers/main/model_doc/videomae)
--[Attention Is All You Need](https://arxiv.org/abs/1706.03762)
+- ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762)
+- [Language modeling with nn.transformer and torchtext](https://pytorch.org/tutorials/beginner/transformer_tutorial.html)
 
 **TODO:**
