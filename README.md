@@ -424,7 +424,7 @@ The table below provides a summary of the generated datasets:
 
 ### Model training
 
-We implemented a function with the training [logic](./vid_cap/modelling/train.py) that can be parameterized with the following arguments:
+We implemented a function with the [training logic](./vid_cap/modelling/train.py) that can be parameterized with the following arguments:
 - Captions per video: Number of captions per video to use in training and validation.
 - Vocabulary size: Number of words in the vocabulary.
 - Batch size: Number of samples per batch.
