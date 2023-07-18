@@ -517,7 +517,7 @@ In our model the dropout is applied to the output of the embedding layer and the
 
 ### Model Testing
 
-For model testing we compare each prediction made from the embeddings of the test dataset with the 20 captions associated with it.
+For [model testing](./vid_cap/modelling/test.py) we compare each prediction made from the embeddings of the test dataset with the 20 captions associated with it.
 
 As with validation, we use BLEU score as the metric to evaluate the model performance. In this case the values we obtain are much higher as the better models we were able to train manage quite well to predict the shorter captions associate with each video.
 
