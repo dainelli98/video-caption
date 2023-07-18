@@ -866,6 +866,12 @@ Scheduled Sampling is a technique that addresses the discrepancy between trainin
 
 However, as training progresses, the model increasingly uses its own predicted tokens as input, resembling real-world inference conditions.
 
+### Explore different approaches to extract the frames from videos
+
+In the end we did not use complex approaches to extract the frames from videos because the simple approach, also used in VideoMAE examples, work good enough, and also it augmented to an impractical extent the time needed to process the videos.
+
+Even though, with more time we could study the effect that using tools like ``katana`` or ``FFMPEG`` to use complex criteria could have on the model and its performance.
+
 ## References
 
 - [MSR-VTT: A Large Video Description Dataset for Bridging Video and Language](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/cvpr16.msr-vtt.tmei_-1.pdf)
