@@ -423,8 +423,6 @@ The table below provides a summary of the generated datasets:
 
 ### Transformer Decoder
 
-
-
 We have defined a custom Transformer model with a decoder architecture. This model is composed by:
 
 - Embedding Layer: this layer is responsible for converting input tokens into their corresponding embeddings. The size of the input is the vocabulary size and the output is the embedding dimension.
