@@ -33,9 +33,7 @@ class VideoEvalDataset(Dataset):
     _data: list[tuple[torch.Tensor, int]]
     _captions: pd.DataFrame
 
-    def __init__(
-        self, video_dir: Path | str, caps_file: Path | str
-    ) -> None:
+    def __init__(self, video_dir: Path | str, caps_file: Path | str) -> None:
         if not isinstance(video_dir, Path):
             video_dir = Path(video_dir)
 

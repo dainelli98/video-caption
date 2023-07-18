@@ -12,7 +12,7 @@ def _main() -> None:
     @click.group(chain=True)
     @click.version_option(__version__)
     def entry_point() -> None:
-        """Package entry points."""
+        """Train and evaluate model to obtain video descriptions from videos."""
         for command in (scripts.train, scripts.prepare_dataset, scripts.test, scripts.experiment):
             entry_point.add_command(command)
 

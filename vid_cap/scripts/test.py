@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Script to test decoder."""
-import os
 import platform
 from pathlib import Path
 
@@ -26,15 +25,19 @@ _MAX_TGT_LEN = 100
 )
 @click.option("--batch-size", default=64, type=click.IntRange(1, 512), help="Batch size.")
 @click.option("--use-gpu", is_flag=True, type=bool, help="Try to test with GPU")
-@click.option("--experiment-number", required=True, type=str, help="Number timestamp name on experiment folder.")
-
+@click.option(
+    "--experiment-number",
+    required=True,
+    type=str,
+    help="Number timestamp name on experiment folder.",
+)
 def main(
     n_heads: int,
     data_dir: Path,
     n_layers: int,
     batch_size: int,
     use_gpu: bool,
-    experiment_number: str
+    experiment_number: str,
 ) -> None:
     """Test decoder.
 
@@ -51,7 +54,9 @@ def main(
     """
     experiment_folder_path: Path = data_dir / "output" / experiment_number
     model_path: Path = experiment_folder_path / "model"
-    use_bpe = os.path.isfile(experiment_folder_path / "bpe.codes")
+    use_bpe = (experiment_folder_path / "bpe.codes").exists() and (
+        experiment_folder_path / "bpe.codes"
+    ).is_file()
 
     gpu_model = "cpu"
 

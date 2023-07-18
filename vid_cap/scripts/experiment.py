@@ -29,7 +29,9 @@ _SEED = 1234
 
 @click.command("experiment")
 @click.option("--warmup-steps", default=4000, type=click.IntRange(1, 100000), help="Warmup steps.")
-@click.option("--loss-smoothing", default=0.1, type=click.FloatRange(0, 1), help="Loss smoothing.")
+@click.option(
+    "--label-smoothing", default=0.1, type=click.FloatRange(0, 1), help="Label smoothing."
+)
 @click.option("--data-dir", default=DATA_DIR, type=click.Path(exists=True), help="Data directory")
 @click.option("--shuffle", is_flag=True, default=False, type=bool, help="Shuffle datasets")
 @click.option("--batch-size", default=64, type=click.IntRange(1, 512), help="Batch size.")
@@ -59,7 +61,7 @@ _SEED = 1234
 )
 def main(
     warmup_steps: int,
-    loss_smoothing: float,
+    label_smoothing: float,
     data_dir: Path,
     shuffle: bool,
     batch_size: int,
@@ -77,7 +79,7 @@ def main(
     \f
 
     :param warmup_steps: Warmup steps.
-    :param loss_smoothing: Loss smoothing.
+    :param label_smoothing: Label smoothing.
     :param data_dir: Path to data directory.
     :param shuffle: Whether to shuffle datasets.
     :param batch_size: Batch size.
@@ -152,7 +154,7 @@ def main(
         "n_layers": n_layers,
         "vocab_len": train_dataset.vocab_len,
         "caps_per_vid": caps_per_vid,
-        "loss_smoothing": loss_smoothing,
+        "label_smoothing": label_smoothing,
         "dropout": dropout,
         "embeddings": train_dataset.shape[0],
         "warmup_steps": warmup_steps,
@@ -196,7 +198,7 @@ def main(
         device,
         out_dir,
         writer,
-        loss_smoothing,
+        label_smoothing,
         use_bpe,
     )
 
