@@ -8,7 +8,7 @@
 - [Environment Setup](#environment-setup)
 - [Running the project](#running-the-project)
 - [Dataset. MSR-VTT 10K](#dataset-msr-vtt-10k)
-- [Methods/Algorithms Used](#methods-algorithms-used)
+- [Method and Algorithms Used](#methods-and-algorithms-used)
 - [Experiments](#experiments)
 - [Results](#results)
 - [Conclusions](#conclusions)
@@ -349,7 +349,7 @@ Also, the videos can be found already extracted from YouTube in [Mediafire](http
 | Val    | video6513| video7009| 497      | 20               |
 | Test   | video7010| video9999| 2990     | 20               |
 
-## Methods/Algorithms Used
+## Methods and Algorithms Used
 
 ### Video Encoding
 
