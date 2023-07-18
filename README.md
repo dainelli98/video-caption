@@ -484,9 +484,9 @@ We fixed the following parameters for the optimizer:
 
 For each epoch we iterate over the training dataset and calculate the loss for each batch.
 
-If we use more than one caption per video, we associate a copy of the embedding with each caption, and they are trated as separate samples.
+If we use more than one caption per video, we associate a copy of the embedding with each caption, and they are treated as separate samples.
 
-We have used teacher forcing during training and validation. This is a strategy commonly used to train seq2seq models. This strategy reduce having “exposure bias” problems, that occurs when the model is trained on the true sequence but must generate sequences from its own imperfect predictions during inference. Thanks to teacher forcing we use the true output sequence as the input to the model instead of the model’s won predictions, so that the model is forced to learn from the true sequence rather than from its own.
+We have used teacher forcing during training and validation. This is a strategy commonly used to train seq2seq models. This strategy reduces having "exposure bias" problems, that occurs when the model is trained on the true sequence but must generate sequences from its own imperfect predictions during inference. Thanks to teacher forcing we use the true output sequence as the input to the model instead of the model's own predictions, so that the model is forced to learn from the true sequence rather than from its own.
 
 We also use masking during training to ensure that the prediction for a certain step does not depend on any elements in the future.
 
