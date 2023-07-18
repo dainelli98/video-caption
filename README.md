@@ -715,6 +715,33 @@ Here are some examples of predictions and some of their targets:
 - 'a man is showing a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about a dish about'
   - targets: 'a woman puts tomatoes in a food processor and blends them to a paste', 'in the kitchen a lady grinding some food in the grinder', 'in the kitchenthere is a women working with mixer grinder', 'the woman is demonstrating the use of a food processor with tomatoes', 'one lady open the mixer jar and telling the taste of a dishes'
 
+#### BPE vocabulary
+
+In the last stages of the project we have been able to test in a small capacity the use of BPE vocabularies. We think that this results should not be compared with the results obtained with the word vocabularies because in the end we could not experiment enough with BPE. Furthermore, as we comment in next steps we think that the training must be revisited and adapted to this approach.
+
+Our best results with BPE are the following:
+
+| Parameter          | Value  |
+|:-------------------|-------:|
+| Batch Size         | 100    |
+| Shuffle            | True   |
+| # Heads            | 4      |
+| # Layers           | 2      |
+| Vocabulary Length  | 449    |
+| Captions per video | 18     |
+| Loss Smoothing     | 0.1    |
+| Dropout            | 0.2    |
+| Embeddings         | 98     |
+| Warmup Steps       | 4000   |
+| BPE Num Operations | 1500   |
+| Use BPE            | True   |
+| Val BLEU Score     | 0.0    |
+| Train Loss         | 1.0163 |
+| Val Loss           | 4.8782 |
+| Test BLEU Score    | 0.0244 |
+
+As we can see the vocabulary size can be reduced significantly with this approach.
+
 #### Wrong behaviors
 
 During our search of a good model we found some common behaviors:
@@ -830,6 +857,14 @@ The abovementioned framework could be deployed as an application accessible thro
 Even though we wanted to use a fully pretrained model, and we were able to obtain good enough results with it, we think that it would be worth exploring if it is possible to obtain better results if we fine-tune the model encoder and retrain it with the decoder and our training data.
 
 This together with the previous point may enable us to train with the full embeddings and bigger model architectures. Though it may be unnecessary given that we are already obtaining good results.
+
+### Use schedule sampling to improve performance with BPE
+
+We obtained poor performance using BPE vocabulary. We think that we can iterate this approach by revising how we train the model.
+
+Scheduled Sampling is a technique that addresses the discrepancy between training and inference in sequence-to-sequence models. It gradually shifts the model from relying solely on ground truth tokens during training to using its own predictions during decoding.
+
+However, as training progresses, the model increasingly uses its own predicted tokens as input, resembling real-world inference conditions.
 
 ## References
 
