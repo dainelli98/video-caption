@@ -47,7 +47,10 @@ def get_video_frames(filepath: Path | str, n_frames: int) -> np.ndarray:
     :param filepath: Path to the video file.
     :param n_frames: Number of frames to sample from the video.
     """
-    container = av.open(str(filepath.absolute()))
+    if isinstance(filepath,str):
+        container = av.open(filepath)
+    else:
+        container = av.open(str(filepath.absolute()))
     indices = _sample_frame_indices(n_frames, seg_len=container.streams.video[0].frames)
     return _read_video_pyav(container, indices)
 

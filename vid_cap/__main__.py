@@ -13,7 +13,7 @@ def _main() -> None:
     @click.version_option(__version__)
     def entry_point() -> None:
         """Train and evaluate model to obtain video descriptions from videos."""
-        for command in (scripts.train, scripts.prepare_dataset, scripts.test, scripts.experiment):
+        for command in (scripts.train, scripts.prepare_dataset, scripts.test, scripts.experiment, scripts.inference):
             entry_point.add_command(command)
 
     entry_point.main(standalone_mode=False)

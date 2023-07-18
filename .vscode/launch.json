@@ -1,6 +1,27 @@
 {
   "configurations": [
-
+    {
+      "args": [
+        "inference",
+        "--use-gpu",
+        "--n-heads",
+        "4",
+        "--n-layers",
+        "2",
+        "--video-path",
+        "/Users/juanbacardit/Src/UPC/video-caption/models/inference/video.mp4",
+        "--inference-model",
+        "models/inference/model",
+        "--inference-model-vocab",
+        "models/inference/vocab.pkl"
+    
+      ],
+      "justMyCode": true,
+      "module": "vid_cap.__main__",
+      "name": "Inference",
+      "request": "launch",
+      "type": "python"
+    },
     {
       "args": [
         "experiment",

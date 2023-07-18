@@ -27,3 +27,6 @@ format:
 	black -l 100 .
 	ruff -s --fix --exit-zero .
 	docformatter -r -i --wrap-summaries 100 --wrap-descriptions 90 .
+
+inference:
+	poetry run python -m vid_cap.__main__ inference --n-heads 4 --n-layers 2 --video-path $(VIDEO) --inference-model models/inference/model --inference-model-vocab models/inference/vocab.pkl 
