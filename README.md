@@ -24,7 +24,7 @@
 ([joanpascualgrau@gmail.com](mailto:joanpascualgrau@gmail.com))
   - Sergi Taramon
 ([sergitaramon21@gmail.com](mailto:sergitaramon21@gmail.com))
-  - Juan Bacardit **TODO:** add mail
+  - Juan Bacardit ([juanbacardit@gmail.com](mailto:juanbacardit@gmail.com))
 - Advisor: Carlos Escolano
 - Framework: ``pytorch``
 
@@ -357,6 +357,8 @@ We used the predefined distribution of the original dataset (Train: 6513, Val: 4
 
 We implemented a script [prepare_dataset](./vid_cap/scripts/prepare_dataset.py) that allows to generate video encodings with a giving sampling value.
 
+![Dataset_preparation](./report/images/datasetprep_arch.png)
+
 #### Frame extraction
 
 Our initial implementation extracts 16 evenly spaced frames from each video.
@@ -421,6 +423,8 @@ The table below provides a summary of the generated datasets:
 
 ### Transformer Decoder
 
+
+
 We have defined a custom Transformer model with a decoder architecture. This model is composed by:
 
 - Embedding Layer: this layer is responsible for converting input tokens into their corresponding embeddings. The size of the input is the vocabulary size and the output is the embedding dimension.
@@ -428,18 +432,19 @@ We have defined a custom Transformer model with a decoder architecture. This mod
 - Transformer Decoder: this is the core of the Transformer model. It uses a Transformer decoder layer, which consists of a multi-head attention mechanism and a position-wise feed-forward network. The number of layers and attention heads, the activation function, and the dropout rate can all be specified when initializing the model. It also includes a masking mechanism to prevent attention to future positions in the sequence.
 - Dense Layer: finally a linear layer that maps the output of the Transformer decoder to the vocabulary size, acting as a classifier over the entire vocabulary.
 
+![General data flow](./report/images/model_arch.png)
+
 First of all we initialize the model. The weights of the embedding layer are uniformly initialized with a small range (-0.1 to 0.1).
 Then during forward propagation, the input target sequence is passed through the embedding layer, the positional encoding layer, and the Transformer decoder and finally the output of the decoder is passed through the final dense layer.
 
 #### Model Architecture
 
+The final model should receive a video as input, process it and generate the final caption as an output. To generate predictions, we connect both the encoder and the decoder, the outcome component takes the video representation obtained from the encoder as its initial input. At each step, the decoder generates a token or element of the output sequence based on its current hidden state and the previously generated tokens. This process is typically performed iteratively until a predefined termination condition is met, such as reaching a maximum sequence length or generating an end-of-sequence token.
+
+![Inference](./report/images/inference_arch.png)
+
 The model architecture described in the prior section can be seen in this [image](./report/images/render.png).
 
-#### General data flow
-
-**TODO:**
-
-![General data flow](./report/images/general_flow.png)
 
 ### Model training
 
