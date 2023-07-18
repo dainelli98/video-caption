@@ -64,7 +64,7 @@ To run this project you will need to install the following dependencies:
 $ git clone https://github.com/dainelli98/video_caption.git
 ```
 
-After having cloned the repo, if not using docker, create a virtual environment and install Python packages:
+After having cloned the repo create a virtual environment and install Python packages:
 
 ```shell
 $ make venv
