@@ -1,4 +1,4 @@
-# Developing an Efficient Video Caption Generator: A Transformer-Based Approach
+# Developing a Video Caption Generator: A Transformer-Based Approach
 
 ## Table of Contents
 
