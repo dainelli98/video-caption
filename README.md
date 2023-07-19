@@ -78,20 +78,6 @@ Install package via pip using:
 $ pip install -e .
 ```
 
-### Poetry
-
-To include a new package to the project it has to be added into the ``pyproject.toml`` file under the correct group. Application packages have to be included inside ``tool.poetry.dependencies``.
-
-Other packages have to be included in their respective groups like dev, docs or custom groups.
-
-To add a package run ``poetry add [options] [--] <name>``. You can indicate the group to add the dependency to with the option ``--group=GROUP``.
-
-To remove a package run ``poetry remove [options] [--] <packages>``. You can indicate the group to remove the dependency from with the option ``--group=GROUP``.
-
-To update the ``poetry.lock`` file, run ``poetry lock --no-update``.
-
-Run ``poetry list`` to get more information about all the commands that poetry can run.
-
 ### Generate documentation
 
 Run the following command to generate project API documentation:
